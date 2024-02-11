@@ -2,6 +2,7 @@ import os
 import random
 import shutil
 import argparse
+from sklearn.model_selection import train_test_split
 from config import *
 
 def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
@@ -17,7 +18,7 @@ def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     seed: Random seed for reproducibility.
     """
     # Set random seed for reproducibility
-    random.seed(seed)
+    random.seed(seed, version=2)
 
     image_path = os.path.join(data_path, 'images')
     mask_path = os.path.join(data_path, 'masks')
@@ -54,25 +55,16 @@ def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     data = list(zip(image_files, mask_files))
 
     # Shuffle the data
-    random.shuffle(data)
-
-    # Calculate split sizes
-    total_samples = len(data)
-    train_size = int(total_samples * train_ratio)
-    val_size = int(total_samples * val_ratio)
-    test_size = total_samples - train_size - val_size
+    #random.shuffle(data)
+    test_ratio = 1 - train_ratio - val_ratio
+    remaining_data, test_data = train_test_split(data, test_size=test_ratio, random_state=seed)
+    train_data, val_data = train_test_split(remaining_data, test_size=val_ratio / (1 - test_ratio), random_state=seed)
 
     # Copy data to respective directories
-    for i, (image_file, mask_file) in enumerate(data):
-        if i < train_size:
-            shutil.copy(os.path.join(image_path, image_file), os.path.join(train_images_dir, image_file))
-            shutil.copy(os.path.join(mask_path, mask_file), os.path.join(train_masks_dir, mask_file))
-        elif i < train_size + val_size:
-            shutil.copy(os.path.join(image_path, image_file), os.path.join(val_images_dir, image_file))
-            shutil.copy(os.path.join(mask_path, mask_file), os.path.join(val_masks_dir, mask_file))
-        else:
-            shutil.copy(os.path.join(image_path, image_file), os.path.join(test_images_dir, image_file))
-            shutil.copy(os.path.join(mask_path, mask_file), os.path.join(test_masks_dir, mask_file))
+    for dataset, directory in [(train_data, train_dir), (val_data, val_dir), (test_data, test_dir)]:
+        for image_file, mask_file in dataset:
+            shutil.copy(os.path.join(image_path, image_file), os.path.join(os.path.join(directory, 'images'), image_file))
+            shutil.copy(os.path.join(mask_path, mask_file), os.path.join(os.path.join(directory, 'masks'), mask_file))
 
 
 if __name__ == "__main__":
