@@ -42,6 +42,7 @@ def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     train_masks_dir = os.path.join(train_dir, 'masks')
     val_images_dir = os.path.join(val_dir, 'images')
     val_masks_dir = os.path.join(val_dir, 'masks')
+
     test_images_dir = os.path.join(test_dir, 'images')
     test_masks_dir = os.path.join(test_dir, 'masks')
 
