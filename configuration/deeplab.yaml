@@ -1,0 +1,29 @@
+dataset:
+  random_seed: 123
+  shuffle: 1
+  validation_split: 0.15
+  data_path: "./data/train/cropped_data/"
+  val_data_path: "./data/test/cropped_data/"
+  merge_train_val: 1
+  batch_size: 4
+  augmentation: 1
+  val_aug: 0
+  normalize_imagenet: 0
+  automatic_normalize: 0
+  pil_version: 0
+
+model:
+  name: "model"
+  encoder_name: 'deeplabv3_resnet101'
+  exp_name: 'deeplab_aug_bkg_05'
+  remove_aux: 1
+
+opt:
+  lr: 0.0001
+  es_patience: 15
+  lr_patience: 6
+  epochs: 200
+  num_workers: 0
+  logit_loss: 1
+  pos_weight: Null  #Null
+  from_last_to_unfreeze: 10000
