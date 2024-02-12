@@ -113,10 +113,10 @@ def main(images_path, model_path, ths_num=0):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--images_path", default=cropped_val_tot_bkg_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=cropped_test_images_path, help="Path to the input image")
     parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95")
     parser.add_argument("--normalize_imagenet", default=0, help="imagenet normalization")
-    parser.add_argument("--model_path", default="../model_results/deeplab/deeplabv3_resnet101/deeplab_aug_bkg_025_train_test_split_pw_07_2024_02_10_12_19_37/model.pth"
+    parser.add_argument("--model_path", default="../model_results/deeplab/deeplabv3_resnet101/deeplab_bkg_025_2024_02_11_19_27_26/model.pth"
                         , help="Path to the input model")
     parser.add_argument("--remove_small_objs_size", default=150, help="")
 

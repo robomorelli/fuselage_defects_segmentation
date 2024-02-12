@@ -100,10 +100,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
-    parser.add_argument("--images_path", default=val_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=test_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
     parser.add_argument("--step_size", type=int, default=512, help="Step size for the cropping")
-    parser.add_argument("--save_bkg_perc", type=int, default=0.25, help="probability to retain a background image")
+    parser.add_argument("--save_bkg_perc", type=int, default=1, help="probability to retain a background image")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")

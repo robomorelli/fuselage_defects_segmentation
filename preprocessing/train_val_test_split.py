@@ -39,14 +39,6 @@ def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     image_files = os.listdir(image_path)
     mask_files = [x.replace('.', '_mask.') for x in image_files]
 
-    train_images_dir = os.path.join(train_dir, 'images')
-    train_masks_dir = os.path.join(train_dir, 'masks')
-    val_images_dir = os.path.join(val_dir, 'images')
-    val_masks_dir = os.path.join(val_dir, 'masks')
-
-    test_images_dir = os.path.join(test_dir, 'images')
-    test_masks_dir = os.path.join(test_dir, 'masks')
-
     # Check if the number of images and masks are the same
     if len(image_files) != len(mask_files):
         raise ValueError("Number of images and masks do not match.")

@@ -183,28 +183,28 @@ def main(args):
         train_indices_val, val_indices_val = indices[split:], indices[:split]
 
         if cfg.dataset.pil_version:
-            train_dataset_train = BinarySegmentationPil(cropped_train_path, idxs=train_indices_train, transform=None)
-            train_dataset_val = BinarySegmentationPil(cropped_val_path, idxs=train_indices_val, transform=None)
-            val_dataset_train = BinarySegmentationPil(cropped_train_path, idxs=val_indices_train, transform=None)
-            val_dataset_val = BinarySegmentationPil(cropped_val_path, idxs=val_indices_val, transform=None)
+            train_dataset_train = BinarySegmentationPil(data_path, idxs=train_indices_train, transform=None)
+            train_dataset_val = BinarySegmentationPil(val_data_path, idxs=train_indices_val, transform=None)
+            val_dataset_train = BinarySegmentationPil(data_path, idxs=val_indices_train, transform=None)
+            val_dataset_val = BinarySegmentationPil(val_data_path, idxs=val_indices_val, transform=None)
             train_dataset = ConcatDataset([train_dataset_train, train_dataset_val])
             val_dataset = ConcatDataset([val_dataset_train, val_dataset_val])
         else:
             if cfg.dataset.augmentation:
-                train_dataset_train = BinarySegmentationAlb(cropped_train_path, idxs=train_indices_train,
+                train_dataset_train = BinarySegmentationAlb(data_path, idxs=train_indices_train,
                                                             transform=transform)
-                train_dataset_val = BinarySegmentationAlb(cropped_val_path, idxs=train_indices_val, transform=transform)
-                val_dataset_train = BinarySegmentationAlb(cropped_train_path, idxs=val_indices_train,
+                train_dataset_val = BinarySegmentationAlb(val_data_path, idxs=train_indices_val, transform=transform)
+                val_dataset_train = BinarySegmentationAlb(data_path, idxs=val_indices_train,
                                                           transform=val_transform)
-                val_dataset_val = BinarySegmentationAlb(cropped_val_path, idxs=val_indices_val, transform=val_transform)
+                val_dataset_val = BinarySegmentationAlb(val_data_path, idxs=val_indices_val, transform=val_transform)
 
                 if cfg.dataset.add_base_images:
-                    train_dataset_train_base = BinarySegmentationAlb(cropped_train_path, idxs=train_indices_train,
+                    train_dataset_train_base = BinarySegmentationAlb(data_path, idxs=train_indices_train,
                                                                 transform=None)
-                    train_dataset_val_base = BinarySegmentationAlb(cropped_val_path, idxs=train_indices_val, transform=None)
-                    val_dataset_train_base = BinarySegmentationAlb(cropped_train_path, idxs=val_indices_train,
+                    train_dataset_val_base = BinarySegmentationAlb(val_data_path, idxs=train_indices_val, transform=None)
+                    val_dataset_train_base = BinarySegmentationAlb(data_path, idxs=val_indices_train,
                                                               transform=None)
-                    val_dataset_val_base = BinarySegmentationAlb(cropped_val_path, idxs=val_indices_val, transform=None)
+                    val_dataset_val_base = BinarySegmentationAlb(val_data_path, idxs=val_indices_val, transform=None)
 
                     train_dataset = ConcatDataset([train_dataset_train, train_dataset_val
                                                       , train_dataset_train_base, train_dataset_val_base])
@@ -220,26 +220,24 @@ def main(args):
             print(' with pil version augmentation is not implemented')
             print(' with pil version augmentation is not implemented')
 
-            train_dataset = BinarySegmentationPil(cropped_train_path, transform=None)
-            val_dataset = BinarySegmentationPil(cropped_val_path, transform=None)
+            train_dataset = BinarySegmentationPil(data_path, transform=None)
+            val_dataset = BinarySegmentationPil(val_data_path, transform=None)
         else:
             if cfg.dataset.augmentation:
 
-                train_dataset = BinarySegmentationAlb(cropped_train_path, transform=transform)
-                val_dataset = BinarySegmentationAlb(cropped_val_path, transform=val_transform)
+                train_dataset = BinarySegmentationAlb(data_path, transform=transform)
+                val_dataset = BinarySegmentationAlb(val_data_path, transform=val_transform)
 
                 if cfg.dataset.add_base_images:
-                    train_dataset_base = BinarySegmentationAlb(cropped_train_path, transform=None)
-                    val_dataset_base = BinarySegmentationAlb(cropped_val_path, transform=None)
+                    train_dataset_base = BinarySegmentationAlb(data_path, transform=None)
+                    val_dataset_base = BinarySegmentationAlb(val_data_path, transform=None)
 
-                    train_dataset = ConcatDataset(
-                        [train_dataset, train_dataset_base])
-                    val_dataset = ConcatDataset(
-                        [val_dataset, val_dataset_base])
+                    train_dataset = ConcatDataset([train_dataset, train_dataset_base])
+                    val_dataset = ConcatDataset([val_dataset, val_dataset_base])
 
             else:
-                train_dataset = BinarySegmentationAlb(cropped_train_path, transform=transform)
-                val_dataset = BinarySegmentationAlb(cropped_val_path, transform=val_transform)
+                train_dataset = BinarySegmentationAlb(data_path, transform=transform)
+                val_dataset = BinarySegmentationAlb(val_data_path, transform=val_transform)
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)
