@@ -147,8 +147,6 @@ def training_cycle_deeplab(cfg, model, train_loader, val_loader, criterion, opti
                             loss = criterion(outputs['out'], masks)
                             dice_loss = metric_dice_loss(outputs['out'], masks)
 
-                        loss = criterion(outputs, masks).item()
-
                         running_loss += loss
 
                         vepoch.set_postfix(loss=loss, dice_loss=dice_loss.item())
