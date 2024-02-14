@@ -1,1 +1,7 @@
-/data/
+/data/cropped_data
+/data/images
+/data/masks
+/data/train
+/data/val
+/data/test
+/data/k-fold.zip
