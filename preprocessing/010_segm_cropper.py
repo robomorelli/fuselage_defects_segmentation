@@ -62,7 +62,7 @@ def crop_images(args):
     images_files = [f for f in os.listdir(images_input_folder) if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
     masks_files = [f for f in os.listdir(masks_input_folder) if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
 
-    for image_file in images_files:
+    for image_file in tqdm(images_files):
         # Construct the full file paths
         image_input_path = os.path.join(images_input_folder, image_file)
         mask_file = image_file.replace('.', "_mask.")
@@ -80,11 +80,18 @@ def crop_images(args):
                 width, height = msk.size
 
                 # Iterate over the image, cropping and saving
-                for y in tqdm(range(0, height - crop_size + 1, shift)):
-                    for x in range(0, width - crop_size + 1, shift):
+                for y in range(0, height, shift):
+                    for x in range(0, width, shift):
                         # Crop the image
-                        cropped_img = img.crop((x, y, x + crop_size, y + crop_size))
-                        cropped_msk = msk.crop((x, y, x + crop_size, y + crop_size))
+                        if x + crop_size < IMG_WIDTH and y + crop_size < IMG_HEIGHT:
+                            cropped_img = img.crop((x, y, x + crop_size, y + crop_size))
+                            cropped_msk = msk.crop((x, y, x + crop_size, y + crop_size))
+                        elif x + crop_size > IMG_WIDTH:
+                            cropped_img = img.crop((IMG_WIDTH - crop_size, y, IMG_WIDTH, y + crop_size))
+                            cropped_msk = msk.crop((IMG_WIDTH - crop_size, y, IMG_WIDTH, y + crop_size))
+                        elif y + crop_size > IMG_HEIGHT:
+                            cropped_img = img.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
+                            cropped_msk = msk.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
 
                         if np.sum(cropped_msk) > 1:
                             # Save the cropped image to the output folder
@@ -100,10 +107,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
-    parser.add_argument("--images_path", default=test_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
-    parser.add_argument("--step_size", type=int, default=512, help="Step size for the cropping")
-    parser.add_argument("--save_bkg_perc", type=int, default=1, help="probability to retain a background image")
+    parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping")
+    parser.add_argument("--save_bkg_perc", type=int, default=0.25, help="probability to retain a background image")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")

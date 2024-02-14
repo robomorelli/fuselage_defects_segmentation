@@ -1,6 +1,6 @@
 import argparse
 from torch.utils.data import DataLoader
-from dataset.segmentation import SemanticSegmentationDataset, BinarySegmentationAlb, BinarySegmentationPil
+from dataset.segmentation import BinarySegmentationAlb, BinarySegmentationPil
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -145,7 +145,7 @@ def main(args):
         val_transform = A.Compose(
             [
                 A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.2),
-                A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.4),
+                A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.2),
                 A.VerticalFlip(p=0.2),
                 A.HorizontalFlip(p=0.2),
 

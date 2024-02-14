@@ -13,6 +13,7 @@ conf_path = os.path.join(root,'configuration')
 
 # Train data path
 data_path = os.path.join(root,'data')
+cropped_data_path = os.path.join(root,'cropped_data')
 data_images_path = os.path.join(root,'data/images')
 data_labels_path = os.path.join(root,'data/labels')
 
@@ -20,6 +21,50 @@ train_data_path = os.path.join(root,'data/train/')
 
 train_images_path = os.path.join(root,'data/train/images')
 train_masks_path = os.path.join(root,'data/train/masks')
+
+k_fold_data_path = os.path.join(root,'data/k-fold')
+
+split1_train_images_path = os.path.join(root,'data/k-fold/fold_1/train/images')
+split1_train_masks_path = os.path.join(root,'data/k-fold/fold_1/train/masks')
+split2_train_images_path = os.path.join(root,'data/k-fold/fold_2/train/images')
+split2_train_masks_path = os.path.join(root,'data/k-fold/fold_2/train/masks')
+split3_train_images_path = os.path.join(root,'data/k-fold/fold_3/train/images')
+split3_train_masks_path = os.path.join(root,'data/k-fold/fold_3/train/masks')
+
+split1_val_images_path = os.path.join(root,'data/k-fold/fold_1/val/images')
+split1_val_masks_path = os.path.join(root,'data/k-fold/fold_1/val/masks')
+split2_val_images_path = os.path.join(root,'data/k-fold/fold_2/val/images')
+split2_val_masks_path = os.path.join(root,'data/k-fold/fold_2/val/masks')
+split3_val_images_path = os.path.join(root,'data/k-fold/fold_3/val/images')
+split3_val_masks_path = os.path.join(root,'data/k-fold/fold_3/val/masks')
+
+split1_test_images_path = os.path.join(root,'data/k-fold/fold_1/test/images')
+split1_test_masks_path = os.path.join(root,'data/k-fold/fold_1/test/masks')
+split2_test_images_path = os.path.join(root,'data/k-fold/fold_2/test/images')
+split2_test_masks_path = os.path.join(root,'data/k-fold/fold_2/test/masks')
+split3_test_images_path = os.path.join(root,'data/k-fold/fold_3/test/images')
+split3_test_masks_path = os.path.join(root,'data/k-fold/fold_3/test/masks')
+
+split1_cropped_train_images_path = os.path.join(root,'data/k-fold/fold_1/train/cropped_data/images')
+split1_cropped_train_masks_path = os.path.join(root,'data/k-fold/fold_1/train/cropped_data/masks')
+split2_cropped_train_images_path = os.path.join(root,'data/k-fold/fold_2/train/cropped_data/images')
+split2_cropped_train_masks_path = os.path.join(root,'data/k-fold/fold_2/train/cropped_data/masks')
+split3_cropped_train_images_path = os.path.join(root,'data/k-fold/fold_3/train/cropped_data/images')
+split3_cropped_train_masks_path = os.path.join(root,'data/k-fold/fold_3/train/cropped_data/masks')
+
+split1_cropped_val_images_path = os.path.join(root,'data/k-fold/fold_1/val/cropped_data/images')
+split1_cropped_val_masks_path = os.path.join(root,'data/k-fold/fold_1/val/cropped_data/masks')
+split2_cropped_val_images_path = os.path.join(root,'data/k-fold/fold_2/val/cropped_data/images')
+split2_cropped_val_masks_path = os.path.join(root,'data/k-fold/fold_2/val/cropped_data/masks')
+split3_cropped_val_images_path = os.path.join(root,'data/k-fold/fold_3/val/cropped_data/images')
+split3_cropped_val_masks_path = os.path.join(root,'data/k-fold/fold_3/val/cropped_data/masks')
+
+split1_cropped_test_images_path = os.path.join(root,'data/k-fold/fold_1/test/cropped_data/images')
+split1_cropped_test_masks_path = os.path.join(root,'data/k-fold/fold_1/test/cropped_data/masks')
+split2_cropped_test_images_path = os.path.join(root,'data/k-fold/fold_2/test/cropped_data/images')
+split2_cropped_test_masks_path = os.path.join(root,'data/k-fold/fold_2/test/cropped_data/masks')
+split3_cropped_test_images_path = os.path.join(root,'data/k-fold/fold_3/test/cropped_data/images')
+split3_cropped_test_masks_path = os.path.join(root,'data/k-fold/fold_3/test/cropped_data/masks')
 
 cropped_train_renamed_masks_path = os.path.join(root,'data/train/cropped_data/renamed_masks')
 cropped_train_threshold_results = os.path.join(root,'data/train/cropped_data/threshold_masks')

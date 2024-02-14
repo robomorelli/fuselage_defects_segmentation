@@ -257,7 +257,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--images_path", default=cropped_test_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=cropped_train_images_path, help="Path to the input image")
     parser.add_argument("--negative_samples_num", default=20, help="Path to the input image")
     parser.add_argument("--json_file_path", default="./json_folder", help="Path to the input image")
     parser.add_argument("--filtered", type=int, default=0, help="remove all the filtered_images into save_path dir")
