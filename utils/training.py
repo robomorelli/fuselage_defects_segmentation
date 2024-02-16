@@ -102,7 +102,7 @@ def training_cycle_deeplab(cfg, model, train_loader, val_loader, criterion, opti
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
-        running_dice_loss= 0.0
+        running_dice_loss = 0.0
 
         with tqdm(train_loader, unit="batch") as tepoch:
             for i, (inputs, masks) in enumerate(tepoch):
@@ -117,6 +117,7 @@ def training_cycle_deeplab(cfg, model, train_loader, val_loader, criterion, opti
                 else:
                     loss = criterion(outputs['out'], masks)
                     dice_loss = metric_dice_loss(outputs['out'], masks)
+
                 loss.backward()
                 optimizer.step()
 
