@@ -83,7 +83,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
 
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
-    global_metrics = pd.DataFrame(None, columns=["F1", "TP", "FP", "FN", "accuracy", "precision", "recall"])
+    global_metrics = pd.DataFrame(None, columns=["F1", "TP", "FP", "FN", "accuracy", "precision", "recall", "loss"])
 
     if ths_num > 0:
         ths = np.linspace(0.2, 0.95, ths_num)
@@ -93,15 +93,23 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
     metrics_dicts = {f"{th}": pd.DataFrame(None, columns=["TP", "FP", "FN", "target objects"]) for th in ths}
 
     model.eval()
-
+    criterion = torch.nn.BCEWithLogitsLoss()
     with torch.no_grad():
+        running_loss = 0.0
         for i, (im, gt_mask) in tqdm(enumerate(dataloader), total=len(dataset)):
             if 'deeplab' or 'resnet' in model_path:
-                pred_mask = model(im.to(device))["out"].sigmoid().detach().cpu().numpy()
+                pred_mask = model(im.to(device))["out"]
             else:
-                pred_mask = model(im.to(device)).detach().cpu().numpy()
-            gt_mask = gt_mask.detach().cpu().numpy()
+                pred_mask = model(im.to(device))
+
             gt_fh = dataset.images_file_names[i]
+
+            loss = criterion(pred_mask, gt_mask.to(device))
+            pred_mask = pred_mask.sigmoid().detach().cpu().numpy()
+            gt_mask = gt_mask.detach().cpu().numpy()
+            running_loss += loss.item()
+            mean_loss = running_loss / (i + 1)
+            print(running_loss / (i+1))
 
             for th in ths:
                 metrics = metrics_dicts[str(th)]
@@ -113,7 +121,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
             metrics = metrics_dicts[str(th)]
             outname = os.path.join(metrics_path, f'{split_suffix }_metrics_{th}.csv')
             metrics.to_csv(outname, index=True)
-            global_metrics.loc[th] = F1Score(metrics)  # possible to itera on different threshold
+            global_metrics.loc[th] = F1Score(metrics, mean_loss)  # possible to itera on different threshold
 
     outname = os.path.join(save_path, f'{split_suffix}_global_metrics.csv')
     global_metrics.to_csv(outname, index=True, index_label='Threshold')
@@ -124,9 +132,9 @@ if __name__ == '__main__':
     parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95")
     parser.add_argument("--normalize_imagenet", default=0, help="imagenet normalization")
     parser.add_argument("--model_path",
-                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_2/deeplab_k_fold_2024_02_14_20_08_22/model.pth"
+                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_1/deeplab_k_fold_2024_02_16_11_54_53/model.pth"
                         , help="Path to the input model")
-    parser.add_argument("--data_path", default=cropped_tot_bkg_data_path
+    parser.add_argument("--data_path", default=cropped_data_path
                         , help="Path to the input model")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")

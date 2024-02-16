@@ -150,8 +150,11 @@ class KFoldDataframe(Dataset):
                                   self.cropped_image_files if 'cropped_' + self.df_names['images'].values[idx].split('.')[0]
                                      == '_'.join(crop_fh.split('_')[:-2])]
 
-            self.images_file_names = [x for x in self.df_names['images'].values]
-            self.masks_file_names = [x for x in self.df_names['masks'].values]
+                    self.images_file_names = [x[0] for x in self.df_names]
+                    self.masks_file_names = [x[1] for x in self.df_names]
+                else:
+                    self.images_file_names = self.df_names['images']
+                    self.masks_file_names = self.df_names['masks']
         else:
             self.images_file_names = self.df['images']
             self.masks_file_names = self.df['masks']

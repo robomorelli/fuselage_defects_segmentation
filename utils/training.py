@@ -140,7 +140,7 @@ def training_cycle_deeplab(cfg, model, train_loader, val_loader, criterion, opti
                     for i, (inputs, masks) in enumerate(vepoch):
 
                         inputs, masks = inputs.to(device), masks.to(device)
-
+                        outputs = model(inputs)
                         if not cfg.opt.logit_loss:
                             loss = criterion(outputs['out'].sigmoid(), masks)
                             dice_loss = metric_dice_metric(outputs['out'].sigmoid(), masks)
@@ -158,7 +158,7 @@ def training_cycle_deeplab(cfg, model, train_loader, val_loader, criterion, opti
                 val_losses.append(val_loss_epoch)
 
                 scheduler.step(val_loss_epoch)
-                print('eval loss {} Training Dice metric: {}'.format(val_loss_epoch, val_dice_loss_epoch))
+                print('eval loss {} val Dice metric: {}'.format(val_loss_epoch, val_dice_loss_epoch))
 
                 early_stopping(val_loss_epoch)
                 if not cfg.opt.save_each_epoch:
@@ -191,3 +191,4 @@ def training_cycle_deeplab(cfg, model, train_loader, val_loader, criterion, opti
                         'train_loss_history': train_losses,
                         'val_loss_history': val_losses,
                     }, out_dir + '/{}.pth'.format(model_name))
+                    val_loss = val_loss_epoch

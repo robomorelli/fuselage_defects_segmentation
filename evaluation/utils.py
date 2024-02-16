@@ -4,10 +4,11 @@ import matplotlib.pyplot as plt
 from scipy import ndimage
 import numpy as np
 from skimage.morphology import erosion
+import torch
 from skimage.morphology import remove_small_holes, remove_small_objects,\
 label, erosion, dilation, local_maxima, skeletonize, binary_erosion, remove_small_holes
 
-def F1Score(metrics):
+def F1Score(metrics, loss = 0):
     # compute performance measure for the current quantile filter
     tot_tp_test = metrics["TP"].sum()
     tot_fp_test = metrics["FP"].sum()
@@ -19,7 +20,7 @@ def F1Score(metrics):
     recall = (tot_tp_test + 0.001)/(tot_tp_test + tot_fn_test + 0.001)
     F1_score = 2*precision*recall/(precision + recall)
 
-    return(F1_score, tot_tp_test, tot_fp_test, tot_fn_test, accuracy, precision, recall)
+    return(F1_score, tot_tp_test, tot_fp_test, tot_fn_test, accuracy, precision, recall, loss)
 
 def compute_metrics(mask, pred, metrics, img_name, obj_size=0):
     # extract predicted objects and counts
