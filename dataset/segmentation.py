@@ -119,8 +119,8 @@ class BinarySegmentationAlb(Dataset):
 class KFoldDataframe(Dataset):
     """Image (semantic) segmentation dataset."""
 
-    def __init__(self, data_path, df_path, fold=1, idxs=None, transform=None,
-                 test=False, normalize_imagenet=False, cropped=True):
+    def __init__(self, data_path, df_path, df=None, idxs=None, transform=None,
+                 test=False, normalize_imagenet=False, cropped=True, from_full_to_crop=False):
         """
         Args:
             root_dir (string): Root directory of the dataset containing the images + annotations.
@@ -128,7 +128,7 @@ class KFoldDataframe(Dataset):
         """
         self.root_dir = data_path
         self.df_path = df_path
-        self.fold = fold
+        self.df = df
         self.images_dir = os.path.join(Path(self.root_dir), 'images')
         self.masks_dir = os.path.join(Path(self.root_dir), 'masks')
         self.indices = idxs
@@ -136,11 +136,25 @@ class KFoldDataframe(Dataset):
         self.test = test
         self.normalize_imagenet = normalize_imagenet
         self.cropped = cropped
+        self.from_full_to_crop = from_full_to_crop
 
-        if self.cropped:
-            self.df_names = pd.read_csv(os.path.join(self.df_path, "cropped_filenames.csv"))
+        if self.df is None:
+            if self.cropped:
+                self.df_names = pd.read_csv(os.path.join(self.df_path, "cropped_filenames.csv"))
+            else:
+                self.df_names = pd.read_csv(os.path.join(self.df_path, "full_size_filenames.csv"))
+
+                if self.from_full_to_crop:
+                    self.cropped_image_files = os.listdir(self.images_dir)
+                    self.df_names = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in range(len(self.df_names)) for crop_fh in
+                                  self.cropped_image_files if 'cropped_' + self.df_names['images'].values[idx].split('.')[0]
+                                     == '_'.join(crop_fh.split('_')[:-2])]
+
+            self.images_file_names = [x for x in self.df_names['images'].values]
+            self.masks_file_names = [x for x in self.df_names['masks'].values]
         else:
-            self.df_names = pd.read_csv(os.path.join(self.df_path, "fulls_size_filenames.csv"))
+            self.images_file_names = self.df['images']
+            self.masks_file_names = self.df['masks']
 
         if self.normalize_imagenet:
             self.mean = (0.485, 0.456, 0.406, 0)
@@ -153,11 +167,8 @@ class KFoldDataframe(Dataset):
             [
                 A.Normalize(mean=self.mean, std=self.std),
                 ToTensorV2(),
-            ]
-        )
+            ])
 
-        self.images_file_names = self.df_names['images']
-        self.masks_file_names = self.df_names['masks']
 
         if self.indices != None:
             self.images_file_names = [x for ix, x in enumerate(self.images_file_names) if ix in self.indices]

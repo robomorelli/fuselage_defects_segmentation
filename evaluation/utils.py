@@ -156,7 +156,7 @@ def compute_metrics_th(mask, pred, metrics, img_name, th=0.5, obj_size=0):
     fp = pred_count - tp
 
     # update metrics dataframe
-    print([tp, fp, fn])
+    #print([tp, fp, fn])
     metrics.loc[img_name] = [tp, fp, fn, targ_count]
 
     return(metrics)

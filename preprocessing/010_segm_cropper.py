@@ -30,8 +30,8 @@ def crop_images(args):
     masks_input_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'masks')
     save_bkg_perc = args.save_bkg_perc
     if args.total_background:
-        image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/tot_bkg_images')
-        mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/tot_bkg_masks')
+        image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/images')
+        mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/masks')
         save_bkg_perc = 1.00
     else:
         image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/images')
@@ -109,8 +109,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
-    parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping")
-    parser.add_argument("--save_bkg_perc", type=int, default=0.25, help="probability to retain a background image")
+    parser.add_argument("--step_size", type=int, default=512, help="Step size for the cropping")
+    parser.add_argument("--save_bkg_perc", type=int, default=1, help="probability to retain a background image")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")

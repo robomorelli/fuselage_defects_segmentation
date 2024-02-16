@@ -13,7 +13,8 @@ conf_path = os.path.join(root,'configuration')
 
 # Train data path
 data_path = os.path.join(root,'data')
-cropped_data_path = os.path.join(root,'cropped_data')
+cropped_data_path = os.path.join(root,'data/cropped_data')
+cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
 data_images_path = os.path.join(root,'data/images')
 data_labels_path = os.path.join(root,'data/labels')
 
@@ -23,6 +24,7 @@ train_images_path = os.path.join(root,'data/train/images')
 train_masks_path = os.path.join(root,'data/train/masks')
 
 k_fold_data_path = os.path.join(root,'data/k-fold')
+split1_k_fold_data_path = os.path.join(root,'data/k-fold/fold_1')
 
 split1_train_images_path = os.path.join(root,'data/k-fold/fold_1/train/images')
 split1_train_masks_path = os.path.join(root,'data/k-fold/fold_1/train/masks')
@@ -86,8 +88,8 @@ cropped_train_images_path = os.path.join(root, 'data/train/cropped_data/images')
 cropped_val_path = os.path.join(root, 'data/val/cropped_data')
 cropped_val_images_path = os.path.join(root, 'data/val/cropped_data/images')
 cropped_val_masks_path = os.path.join(root, 'data/val/cropped_data/masks')
-cropped_val_tot_bkg_images_path = os.path.join(root, 'data/val/cropped_data/tot_bkg_images')
-cropped_val_tot_bkg_masks_path = os.path.join(root, 'data/val/cropped_data/tot_bkgmasks')
+cropped_val_tot_bkg_images_path = os.path.join(root, 'data/val/cropped_data/tot_bkg/images')
+cropped_val_tot_bkg_masks_path = os.path.join(root, 'data/val/cropped_data/tot_bkg/masks')
 
 # Test data path
 test_data_path = os.path.join(root,'data/test')

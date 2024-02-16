@@ -4,50 +4,56 @@ import numpy as np
 from torchvision import models
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
 import sys
+
 sys.path.append('..')
-from dataset.segmentation import BinarySegmentationPil, BinarySegmentationAlb
+from dataset.segmentation import KFoldDataframe, BinarySegmentationAlb
 import torch
 import pandas as pd
 from pathlib import Path
 from torch.utils.data import DataLoader
 from config import *
 from evaluation.utils import compute_metrics, F1Score, compute_metrics_th
+from tqdm import tqdm
 
 import matplotlib
+
 AVAIL_GPUS = min(1, torch.cuda.device_count())
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-def main(images_path, model_path, ths_num=0, normalize_imagenet=0):
+
+def main(data_path, model_path, ths_num=0, normalize_imagenet=0
+         , df_path=k_fold_data_path, fold=1, split='test'):
 
     save_path = Path(model_path).parent.as_posix()
-    if 'train' in images_path:
-        if "tot_bkg" in images_path:
+    if 'train' in split:
+        if "tot_bkg" in data_path:
             metrics_split = 'tot_bkg_metrics_train'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'tot_bkg_train'
+            split_suffix  = 'tot_bkg_train'
         else:
             metrics_split = 'metrics_train'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'train'
-    elif 'val' in images_path:
-        if "tot_bkg" in images_path:
+            split_suffix  = 'train'
+
+    elif 'val' in split:
+        if "tot_bkg" in data_path:
             metrics_split = 'tot_bkg_metrics_val'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'tot_bkg_val'
+            split_suffix = 'tot_bkg_val'
         else:
             metrics_split = 'metrics_val'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'val'
+            split_suffix  = 'val'
 
-    elif 'test' in images_path:
-        if "tot_bkg" in images_path:
+    elif 'test' in split:
+        if "tot_bkg" in data_path:
             metrics_split = 'tot_bkg_metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'tot_bkg_test'
+            split_suffix  = 'tot_bkg_test'
         else:
             metrics_split = 'metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'test'
+            split_suffix  = 'test'
 
     if not os.path.exists(os.path.join(save_path, metrics_split)):
         os.makedirs(metrics_path)
@@ -70,9 +76,11 @@ def main(images_path, model_path, ths_num=0, normalize_imagenet=0):
     else:
         normalize_imagenet = normalize_imagenet
 
-    data_path = Path(images_path).parent.as_posix()
+    df_path = os.path.join(df_path, f"fold_{fold}", split)
 
-    dataset = BinarySegmentationAlb(data_path, transform=None, test=False, normalize_imagenet=normalize_imagenet)
+    dataset = KFoldDataframe(data_path, df_path=df_path, transform=None, test=False,
+                             normalize_imagenet=normalize_imagenet, cropped=False, from_full_to_crop=True)
+
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     global_metrics = pd.DataFrame(None, columns=["F1", "TP", "FP", "FN", "accuracy", "precision", "recall"])
@@ -82,12 +90,12 @@ def main(images_path, model_path, ths_num=0, normalize_imagenet=0):
     else:
         ths = [0.5]
 
-    metrics_dicts = {f"{th}":pd.DataFrame(None, columns=["TP", "FP", "FN", "target objects"]) for th in ths}
+    metrics_dicts = {f"{th}": pd.DataFrame(None, columns=["TP", "FP", "FN", "target objects"]) for th in ths}
 
     model.eval()
 
     with torch.no_grad():
-        for i, (im, gt_mask) in enumerate(dataloader):
+        for i, (im, gt_mask) in tqdm(enumerate(dataloader), total=len(dataset)):
             if 'deeplab' or 'resnet' in model_path:
                 pred_mask = model(im.to(device))["out"].sigmoid().detach().cpu().numpy()
             else:
@@ -103,23 +111,31 @@ def main(images_path, model_path, ths_num=0, normalize_imagenet=0):
 
         for th in ths:
             metrics = metrics_dicts[str(th)]
-            outname = os.path.join(metrics_path, f'{split}_metrics_{th}.csv')
+            outname = os.path.join(metrics_path, f'{split_suffix }_metrics_{th}.csv')
             metrics.to_csv(outname, index=True)
-            global_metrics.loc[th] = F1Score(metrics)  #possible to itera on different threshold
+            global_metrics.loc[th] = F1Score(metrics)  # possible to itera on different threshold
 
-    outname = os.path.join(save_path, f'{split}_global_metrics.csv')
+    outname = os.path.join(save_path, f'{split_suffix}_global_metrics.csv')
     global_metrics.to_csv(outname, index=True, index_label='Threshold')
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--images_path", default=cropped_test_images_path, help="Path to the input image")
     parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95")
     parser.add_argument("--normalize_imagenet", default=0, help="imagenet normalization")
-    parser.add_argument("--model_path", default="../model_results/deeplab/deeplabv3_resnet101/deeplab_bkg_025_2024_02_11_19_27_26/model.pth"
+    parser.add_argument("--model_path",
+                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_2/deeplab_k_fold_2024_02_14_20_08_22/model.pth"
                         , help="Path to the input model")
-    parser.add_argument("--remove_small_objs_size", default=150, help="")
+    parser.add_argument("--data_path", default=cropped_tot_bkg_data_path
+                        , help="Path to the input model")
+    parser.add_argument("--df_path", default=k_fold_data_path
+                        , help="Path to the input model")
+    parser.add_argument("--fold", default=1
+                        , help="Path to the input model")
+    parser.add_argument("--split", default="test"
+                        , help="Path to the input model")
+    parser.add_argument("--remove_small_objs_size", default=100, help="")
 
     args = parser.parse_args()
-    main(images_path=args.images_path, model_path=args.model_path, ths_num=args.ths_num,
-         normalize_imagenet=args.normalize_imagenet)
+    main(data_path=args.data_path, model_path=args.model_path, ths_num=args.ths_num
+         , df_path=args.df_path, fold=args.fold, split=args.split)

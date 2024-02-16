@@ -166,10 +166,10 @@ def main(args):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframe(data_path=data_path, df_path=train_df_path, fold=cfg.dataset.fold
-                                   , transform=transform, cropped=cfg.dataset.cropped)
-    val_dataset = KFoldDataframe(data_path=data_path, df_path=val_df_path, fold=cfg.dataset.fold
-                                 , transform=val_transform, cropped=cfg.dataset.cropped)
+    train_dataset = KFoldDataframe(data_path=data_path, df_path=train_df_path,
+                                   transform=transform, cropped=cfg.dataset.cropped)
+    val_dataset = KFoldDataframe(data_path=data_path, df_path=val_df_path,
+                                 transform=val_transform, cropped=cfg.dataset.cropped)
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)
