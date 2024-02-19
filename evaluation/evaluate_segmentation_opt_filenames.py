@@ -22,21 +22,28 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def main(data_path, model_path, ths_num=0, normalize_imagenet=0
-         , df_path=k_fold_data_path, fold=1, split='test', save_into_common_folder=False
+         , df_path=k_fold_data_path, split='test', save_into_common_folder=False
          ,save_into_model_folder=False):
 
-    save_path = os.path.join(Path(model_path).parent.parent.parent.as_posix(), f'fold_{fold}'
-                             , os.path.basename(Path(model_path).parent.as_posix()))
+    #save_path = os.path.join(Path(model_path).parent.parent.parent.as_posix(), f'fold_{fold}'
+    #                         , os.path.basename(Path(model_path).parent.as_posix()))
+
+    if not os.path.exists(model_path):
+        print('the model path is not correct')
+        raise Exception
+
+    save_path = os.path.join(Path(model_path).parent.as_posix())
+    fold = os.path.basename(Path(model_path).parent.parent).split('_')[1]
 
     if 'train' in split:
         if "tot_bkg" in data_path:
             metrics_split = 'tot_bkg_metrics_train'
             metrics_path = os.path.join(save_path, metrics_split)
-            split_suffix  = 'tot_bkg_train'
+            split_suffix = 'tot_bkg_train'
         else:
             metrics_split = 'metrics_train'
             metrics_path = os.path.join(save_path, metrics_split)
-            split_suffix  = 'train'
+            split_suffix = 'train'
 
     elif 'val' in split:
         if "tot_bkg" in data_path:
@@ -46,17 +53,17 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
         else:
             metrics_split = 'metrics_val'
             metrics_path = os.path.join(save_path, metrics_split)
-            split_suffix  = 'val'
+            split_suffix = 'val'
 
     elif 'test' in split:
         if "tot_bkg" in data_path:
             metrics_split = 'tot_bkg_metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
-            split_suffix  = 'tot_bkg_test'
+            split_suffix = 'tot_bkg_test'
         else:
             metrics_split = 'metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
-            split_suffix  = 'test'
+            split_suffix = 'test'
 
     if not os.path.exists(os.path.join(save_path, metrics_split)):
         os.makedirs(metrics_path)
@@ -148,7 +155,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
             gt_mask = gt_mask.detach().cpu().numpy()
             running_loss += loss.item()
             mean_loss = running_loss / (i + 1)
-            print(running_loss / (i+1))
+            #print(running_loss / (i+1))
 
             for th in ths:
 
@@ -190,14 +197,14 @@ if __name__ == '__main__':
     parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95")
     parser.add_argument("--normalize_imagenet", default=0, help="imagenet normalization")
     parser.add_argument("--model_path",
-                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_1/deeplab_k_fold_2024_02_16_15_35_45/model.pth"
+                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_9/deeplab_k_fold_2024_02_17_01_39_14/model.pth"
                         , help="Path to the input model")
     parser.add_argument("--data_path", default=cropped_tot_bkg_data_path
                         , help="Path to the input model")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")
-    parser.add_argument("--fold", default=1
-                        , help="Path to the input model")
+    #parser.add_argument("--fold", default=7
+    #                    , help="Path to the input model")
     parser.add_argument("--split", default="test"
                         , help="Path to the input model")
     parser.add_argument("--remove_small_objs_size", default=100, help="")
@@ -208,7 +215,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     main(data_path=args.data_path, model_path=args.model_path, ths_num=args.ths_num
-         , df_path=args.df_path, fold=args.fold, split=args.split, save_into_common_folder=args.save_into_common_folder,
+         , df_path=args.df_path, split=args.split, save_into_common_folder=args.save_into_common_folder,
          save_into_model_folder = args.save_into_model_folder)
 
 
