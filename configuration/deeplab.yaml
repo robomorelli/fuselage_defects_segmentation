@@ -6,7 +6,7 @@ dataset:
   val_data_path: "./data/val/cropped_data/"
   merge_train_val: 0
   add_base_images: 0
-  batch_size: 2
+  batch_size: 8
   augmentation: 1
   val_aug: 1
   normalize_imagenet: 0
@@ -28,3 +28,4 @@ opt:
   logit_loss: 1
   pos_weight: Null  #Null
   from_last_to_unfreeze: 10000
+  save_each_epoch: 1

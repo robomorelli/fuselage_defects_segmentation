@@ -141,6 +141,8 @@ class KFoldDataframe(Dataset):
         if self.df is None:
             if self.cropped:
                 self.df_names = pd.read_csv(os.path.join(self.df_path, "cropped_filenames.csv"))
+                self.images_file_names = self.df_names['images']
+                self.masks_file_names = self.df_names['masks']
             else:
                 self.df_names = pd.read_csv(os.path.join(self.df_path, "full_size_filenames.csv"))
 
@@ -155,6 +157,7 @@ class KFoldDataframe(Dataset):
                 else:
                     self.images_file_names = self.df_names['images']
                     self.masks_file_names = self.df_names['masks']
+
         else:
             self.images_file_names = self.df['images']
             self.masks_file_names = self.df['masks']

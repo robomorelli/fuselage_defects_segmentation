@@ -132,7 +132,7 @@ if __name__ == '__main__':
     parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95")
     parser.add_argument("--normalize_imagenet", default=0, help="imagenet normalization")
     parser.add_argument("--model_path",
-                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_1/deeplab_k_fold_2024_02_16_11_54_53/model.pth"
+                        default="../model_results/deeplab_k_fold/deeplabv3_resnet101/fold_2/deeplab_k_fold_2024_02_16_15_35_45/model.pth"
                         , help="Path to the input model")
     parser.add_argument("--data_path", default=cropped_data_path
                         , help="Path to the input model")
