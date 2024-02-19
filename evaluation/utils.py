@@ -81,7 +81,7 @@ def compute_metrics(mask, pred, metrics, img_name, obj_size=0):
     return(metrics)
 
 
-def compute_metrics_th(mask, pred, metrics, img_name, th=0.5, obj_size=0):
+def compute_metrics_th(mask, pred, metrics, img_name, th=0.5, obj_size=0, return_pred_th=True):
     # extract predicted objects and counts
     #pred = pred / 255.
     pred = (pred > th).astype(np.uint8) * 255
@@ -160,4 +160,7 @@ def compute_metrics_th(mask, pred, metrics, img_name, th=0.5, obj_size=0):
     #print([tp, fp, fn])
     metrics.loc[img_name] = [tp, fp, fn, targ_count]
 
-    return(metrics)
+    if return_pred_th:
+        return (metrics), pred
+    else:
+        return(metrics)

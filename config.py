@@ -22,6 +22,9 @@ train_data_path = os.path.join(root,'data/train/')
 
 train_images_path = os.path.join(root,'data/train/images')
 train_masks_path = os.path.join(root,'data/train/masks')
+common_path_train_results = os.path.join(root,'results/train')
+common_path_val_results = os.path.join(root,'results/val')
+common_path_test_results = os.path.join(root,'results/test')
 
 k_fold_data_path = os.path.join(root,'data/k-fold')
 split1_k_fold_data_path = os.path.join(root,'data/k-fold/fold_1')
