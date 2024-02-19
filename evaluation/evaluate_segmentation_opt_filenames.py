@@ -111,9 +111,9 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                 raise NotImplementedError
             if not os.path.exists(save_into_common_path):
                 os.makedirs(save_into_common_path)
-            else:
-                shutil.rmtree(save_into_common_path)
-                os.makedirs(save_into_common_path)
+            #else:
+            #    shutil.rmtree(save_into_common_path)
+            #    os.makedirs(save_into_common_path)
 
     if save_into_model_folder:
         for th in ths:
@@ -164,7 +164,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                         save_into_common_path = os.path.join(common_path_val_results, f"model_results_{th}")
                     elif split == 'test':
                         save_into_common_path = os.path.join(common_path_test_results, f"model_results_{th}")
-                    cv2.imwrite(os.path.join(save_into_common_path, f"{name}"), np.squeeze(pred * 255))
+                    cv2.imwrite(os.path.join(save_into_common_path, f"{name}"), np.squeeze(pred))
                 if save_into_model_folder:
                     if split == 'train':
                         save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
@@ -172,7 +172,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                         save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
                     elif split == 'test':
                         save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
-                    cv2.imwrite(os.path.join(save_into_model_path, f"{name}"), np.squeeze(pred * 255))
+                    cv2.imwrite(os.path.join(save_into_model_path, f"{name}"), np.squeeze(pred))
 
 
         for th in ths:
@@ -196,7 +196,7 @@ if __name__ == '__main__':
                         , help="Path to the input model")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")
-    parser.add_argument("--fold", default=2
+    parser.add_argument("--fold", default=1
                         , help="Path to the input model")
     parser.add_argument("--split", default="test"
                         , help="Path to the input model")
