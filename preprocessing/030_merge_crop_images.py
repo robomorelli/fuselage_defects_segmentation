@@ -1,9 +1,6 @@
-import json
 import os.path
 import shutil
-from segment_anything import SamPredictor, sam_model_registry
 import numpy as np
-import torch
 import matplotlib.pyplot as plt
 import cv2
 import argparse

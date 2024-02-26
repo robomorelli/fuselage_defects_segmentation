@@ -2,7 +2,6 @@ import matplotlib
 import numpy as np
 import sys
 sys.path.append('..')
-from config import *
 matplotlib.use('Qt5Agg')
 from PIL import Image
 import argparse

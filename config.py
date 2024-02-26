@@ -17,6 +17,11 @@ cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
 data_images_path = os.path.join(root,'data/images')
 data_labels_path = os.path.join(root,'data/labels')
+data_masks_path = os.path.join(root,'data/masks')
+multiclass_masks_path = os.path.join(root,'data/masks_classes')
+data_masks_comparison_path = os.path.join(root,'data/masks_comparison')
+
+to_rename_masks_path = os.path.join(root,'data/segmented_task_masks')
 
 train_data_path = os.path.join(root,'data/train/')
 
