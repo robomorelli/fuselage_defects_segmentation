@@ -196,7 +196,7 @@ if __name__ == '__main__':
                         , help="Path to the input model")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")
-    parser.add_argument("--fold", default=2
+    parser.add_argument("--fold", default=1
                         , help="Path to the input model")
     parser.add_argument("--split", default="test"
                         , help="Path to the input model")
