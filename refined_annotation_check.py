@@ -24,7 +24,7 @@ def main(args):
     os.makedirs(masks_output_folder, exist_ok=True)
 
     # Opening JSON file
-    f = open('val_masks_association.json')
+    f = open(f'{args.name_association_file}.json')
 
     data = json.load(f)
 
@@ -60,8 +60,9 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--pre_masks_path", default=to_rename_val_masks_path, help="Path to the input image")
-    parser.add_argument("--refined_masks_path", default=val_masks_path, help="Path to the input image")
+    parser.add_argument("--pre_masks_path", default=to_rename_masks_path, help="Path to the input image")
+    parser.add_argument("--refined_masks_path", default=data_masks_path, help="Path to the input image")
+    parser.add_argument("--name_association_file", default="./data/name_association", help="Path to the input image")
     parser.add_argument("--start_from_scratch", default=1, help="Path to the input image")
 
     args = parser.parse_args()

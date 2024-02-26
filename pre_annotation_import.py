@@ -44,14 +44,13 @@ def main(args):
                         "type": "brushlabels",
                         'value': {"format": "rle", "rle": rle, "brushlabels": ['LABEL']},
                     }
-                ],
-            )
+                ],)
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--masks_path", default=test_masks_path, help="Path to the input image")
+    parser.add_argument("--masks_path", default=data_masks_path, help="Path to the input image")
 
     args = parser.parse_args()
     main(args)

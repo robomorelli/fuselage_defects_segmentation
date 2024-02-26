@@ -8,8 +8,9 @@ import cv2
 import argparse
 from pathlib import Path
 import random
+import sys
+sys.path.append('../')
 from config import *
-
 
 def generate_coordinates_outside_bbox(coordinates, num_points):
     xmin, ymin, xmax, ymax = coordinates
@@ -73,19 +74,18 @@ def main(args):
     json_file_path = args.json_file_path
 
     if args.filtered or "filtered" in input_folder:
-        output_folder = os.path.join(Path(args.images_path).parent.as_posix(), "filtered_masks")
+        output_folder = os.path.join(Path(args.images_path).parent.as_posix(), "filtered_masks_comparison")
     else:
-        output_folder = os.path.join(Path(args.images_path).parent.as_posix(), "masks")
+        output_folder = os.path.join(Path(args.images_path).parent.as_posix(), "masks_comparison")
 
     # Create the output folder if it doesn't exist
     if args.start_from_scratch:
         if os.path.exists(output_folder):
             shutil.rmtree(output_folder)
 
-
     os.makedirs(output_folder, exist_ok=True)
 
-    names_to_include = ['Graffio']  # classes to include into segmentation
+    names_to_include = ['Mark']  # classes to include into segmentation
     names_to_include = [x for x in class_names if x in names_to_include]  # revert into original order of labels
     # Create a dictionary with line numbers as keys and object names as values
     original_obj_dict = {i: name for i, name in enumerate(class_names)}
@@ -105,7 +105,7 @@ def main(args):
     # List all PNG files in the input folder
     png_files = [file for file in os.listdir(input_folder) if file.endswith(".png")]
 
-    sam_checkpoint = "models/sam_vit_h_4b8939.pth"
+    sam_checkpoint = "../models/sam_vit_h_4b8939.pth"
     model_type = "vit_h"
 
     device = "cuda"
@@ -170,27 +170,6 @@ def main(args):
 
             transformed_boxes = predictor.transform.apply_boxes_torch(box_coordinates_tensor, image.shape[:2])
 
-            ''' 
-            negative_samples = torch.zeros((1,args.negative_samples_num*len(box_coordinates), 2))
-            for ix, bbox in enumerate(box_coordinates):
-
-                #negative_samples.extend(generate_coordinates_outside_bbox(bbox, args.negative_samples_num))
-                n_samples = generate_coordinates_outside_bbox(bbox, args.negative_samples_num)
-                for ns_ix, ns in enumerate(n_samples):
-                    negative_samples[0, ix*args.negative_samples_num + ns_ix] = torch.tensor(ns)
-
-            negative_samples = torch.tensor(negative_samples, dtype=torch.float32).to(device=device)
-            #negative_samples = torch.unsqueeze(negative_samples, 0)
-
-            negative_labels = torch.zeros((args.negative_samples_num*len(box_coordinates)))
-            for ix, bbox in enumerate(box_coordinates):
-                for ns_ix, ns in enumerate(n_samples):
-                    negative_labels[ix*args.negative_samples_num + ns_ix] = torch.tensor([1])
-
-            #negative_labels = [0 for i in range(negative_samples.shape[1])]
-            negative_labels = torch.tensor(negative_labels, dtype=torch.float32).unsqueeze(0)
-            '''
-
             masks, _, _ = predictor.predict_torch(
                 point_coords=None,
                 point_labels=None,
@@ -198,35 +177,7 @@ def main(args):
                 multimask_output=False,
             )
 
-            ''' 
-            masks, _, _ = predictor.predict_torch(
-                point_coords=None,
-                point_labels=labels,
-                boxes=transformed_boxes,
-                multimask_output=False,
-            )
-
-
-            masks, _, _ = predictor.predict_torch(
-            point_coords=negative_samples,
-            point_labels=negative_labels,
-            boxes=None,
-            multimask_output=False,
-            )
-            '''
-
             image = put_bbox_on_image(image, box_coordinates, labels)
-
-            ''' 
-            plt.figure(figsize=(10, 10))
-            plt.imshow(image)
-            for mask in masks:
-                show_mask(mask.cpu().numpy(), plt.gca(), random_color=False)
-            for box in box_coordinates_tensor:
-                show_box(box.cpu().numpy(), plt.gca())
-            plt.axis('off')
-            plt.show()
-            '''
 
             # Map labels to object names using the dictionary
             object_names = [original_obj_dict[(label.item())] for label in labels_tensor]
@@ -243,7 +194,7 @@ def main(args):
 
         else:
             image = put_bbox_on_image(image, box_coordinates, labels)
-            unique_mask = np.zeros((IMG_HEIGHT, IMG_HEIGHT, num_classes), dtype=np.uint8)
+            unique_mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, num_classes), dtype=np.uint8)
 
         # Save the generated masks
         output_mask_path = os.path.join(output_folder, os.path.splitext(png_file)[0] + "_mask")
@@ -257,7 +208,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--images_path", default=cropped_train_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--negative_samples_num", default=20, help="Path to the input image")
     parser.add_argument("--json_file_path", default="./json_folder", help="Path to the input image")
     parser.add_argument("--filtered", type=int, default=0, help="remove all the filtered_images into save_path dir")
