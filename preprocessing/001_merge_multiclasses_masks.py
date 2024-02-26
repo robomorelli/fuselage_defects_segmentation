@@ -29,9 +29,11 @@ def main(args):
     min_value = 255 - (step*num_classes)
     viz_palette = [x for x in range(255, min_value-1, -step)]
 
-    if mask_type == 'pixel-wise':
-        #mapping_dict_viz = {f: int(255 / (i + 1)) for i, f in enumerate(folds)}
-        mapping_dict_viz = {f: viz_palette[i] for i, f in enumerate(folds)}
+
+    #mapping_dict_viz = {f: int(255 / (i + 1)) for i, f in enumerate(folds)}
+    mapping_dict_viz = {f: viz_palette[i] for i, f in enumerate(folds)}
+    with open('class_mapping_viz.yaml', 'w') as f:
+        yaml.dump(mapping_dict_viz, f)
 
     folds_masks_names = []
     for f in folds:
@@ -65,8 +67,7 @@ def main(args):
     with open('class_mapping.yaml', 'w') as f:
         yaml.dump(mapping_dict, f)
 
-    with open('class_mapping_viz.yaml', 'w') as f:
-        yaml.dump(mapping_dict_viz, f)
+
 
 
     for png_file in masks_names:
@@ -112,12 +113,17 @@ def main(args):
 
         if mask_type == 'channel-wise':
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, num_classes), dtype=int)
-            for i, label in enumerate(priority_list):
+            mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
+            for i, label in enumerate(folds):
                 addend = masks_collector[label][:,:,0:1]
                 mask[:, :, i] = np.squeeze(addend)
+                addend = masks_collector[label].astype(np.uint8)
+                mask_viz = mask_viz + addend * mapping_dict_viz[label]
 
             # mask = mask / 255.
             np.save(os.path.join(output_folder, png_file.replace(".png", ".npy")), mask)
+            plt.imsave(os.path.join(viz_folder, png_file), np.squeeze(mask_viz), cmap='gray')
+            print('mask unique value', np.unique(mask))
 
             #if num_classes == 1 or num_classes==3:
             #    plt.imsave(os.path.join(output_folder, png_file), np.squeeze(mask))
@@ -125,7 +131,7 @@ def main(args):
         elif mask_type == 'pixel-wise':
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
             mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
-            for label in priority_list:
+            for label in folds:
                 addend = masks_collector[label].astype(np.uint8)
                 mask_viz = mask_viz + addend * mapping_dict_viz[label]
                 mask = mask + addend * mapping_dict[label]
@@ -148,7 +154,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     parser.add_argument("--multiclass_masks_folder", default=multiclass_masks_path, help="Path to the input image")
     parser.add_argument("--output_folder", default=data_masks_path, help="Path to the input image")
-    parser.add_argument("--type", default='pixel-wise', help="[channel-wise, pixel-wise]")
+    parser.add_argument("--type", default='channel-wise', help="[channel-wise, pixel-wise]")
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
     parser.add_argument('--priority_list', nargs='+', default=['1', 'Mark', 'Graffio'], help='List of items')
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
