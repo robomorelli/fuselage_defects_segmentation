@@ -110,7 +110,6 @@ def main(args):
                 masks_collector[label_min] = img_minuend
 
 
-
         if mask_type == 'channel-wise':
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, num_classes), dtype=int)
             mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
@@ -154,7 +153,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     parser.add_argument("--multiclass_masks_folder", default=multiclass_masks_path, help="Path to the input image")
     parser.add_argument("--output_folder", default=data_masks_path, help="Path to the input image")
-    parser.add_argument("--type", default='channel-wise', help="[channel-wise, pixel-wise]")
+    parser.add_argument("--type", default='pixel-wise', help="[channel-wise, pixel-wise]")
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
     parser.add_argument('--priority_list', nargs='+', default=['1', 'Mark', 'Graffio'], help='List of items')
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
