@@ -128,10 +128,10 @@ def main(args):
             #    plt.imsave(os.path.join(output_folder, png_file), np.squeeze(mask))
 
         elif mask_type == 'pixel-wise':
-            mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
-            mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 3), dtype=np.uint8)
+            mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
+            mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
             for label in folds:
-                addend = masks_collector[label].astype(np.uint8)
+                addend = masks_collector[label].astype(np.uint8)[:,:,:1]
                 mask_viz = mask_viz + addend * mapping_dict_viz[label]
                 mask = mask + addend * mapping_dict[label]
 

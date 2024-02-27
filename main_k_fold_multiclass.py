@@ -1,6 +1,8 @@
 import argparse
+import os
+
 from torch.utils.data import DataLoader
-from dataset.segmentation import KFoldDataframe, BinarySegmentationPil
+from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -15,7 +17,7 @@ import numpy as np
 import torch
 import torch.optim
 import segmentation_models_pytorch as smp
-from utils.training import training_cycle, training_cycle_deeplab
+from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass
 from utils.opt import EarlyStopping
 import yaml
 import json
@@ -50,6 +52,11 @@ def main(args):
     torch.manual_seed(1024)
 
     cfg = read_config(os.path.join(conf_path, '{}.yaml'.format(args.config_name)))
+
+    if cfg.model.num_classes == None:
+        num_classes = len(os.listdir(multiclass_masks_path))
+    else:
+        num_classes = cfg.model.num_classes
 
     random_seed = cfg.dataset.random_seed
     shuffle = cfg.dataset.shuffle
@@ -91,7 +98,10 @@ def main(args):
         for param in model.parameters():
             param.requires_grad = False
 
-        model.classifier = DeepLabHead(2048, num_classes=1)
+        if cfg.model.multichannel:
+            model.classifier = DeepLabHead(2048, num_classes=num_classes+1)
+        else:
+            model.classifier = DeepLabHead(2048, num_classes=1)
 
         params = list(model.named_parameters())
         params.reverse()
@@ -166,27 +176,28 @@ def main(args):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframe(data_path=data_path, df_path=train_df_path,
-                                   transform=transform, cropped=cfg.dataset.cropped)
-    val_dataset = KFoldDataframe(data_path=data_path, df_path=val_df_path,
-                                 transform=val_transform, cropped=cfg.dataset.cropped)
+    train_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=train_df_path,
+                                   transform=transform, cropped=cfg.dataset.cropped, n_classes = num_classes)
+    val_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=val_df_path,
+                                 transform=val_transform, cropped=cfg.dataset.cropped, n_classes = num_classes)
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                 drop_last=True)
 
-    if cfg.opt.logit_loss:
+    if cfg.opt.crossentropy_loss:
         if cfg.opt.pos_weight is not None:
             if cfg.opt.pos_weight == 0:
                 raise NotImplementedError
-            weight_pos = cfg.opt.pos_weight
+            weight_pos = [cfg.opt.pos_weight] * num_classes
             weight_pos = weight_pos if isinstance(weight_pos, torch.FloatTensor) else torch.FloatTensor([weight_pos])
-            criterion = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([weight_pos]).to(device))
-            print('logit loss with pos weights')
+            criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([weight_pos]).to(
+                device))  # weight (Tensor, optional): a manual rescaling weight given
+            # to each class as to be a Tensor of size `C` and floating point dtype
+            print('crossentropy with pos weights')
         else:
-            criterion = torch.nn.BCEWithLogitsLoss()
-            print('logit loss')
+            criterion = torch.nn.CrossEntropyLoss()
     else:
         criterion = torch.nn.BCELoss()
         print('BCE')
@@ -200,27 +211,25 @@ def main(args):
                              , cfg.model.exp_name + "_" + now)
 
     if 'deeplab' in args.config_name:
-        training_cycle_deeplab(cfg=cfg, model=model, train_loader=train_dataloader, val_loader=val_dataloader,
-                               criterion=criterion, optimizer=optimizer
-                               , scheduler=scheduler, early_stopping=early_stopping, model_name=cfg.model.name,
-                               out_dir=model_dir, device=device,
-                               num_epochs=cfg.opt.epochs)
+        training_cycle_deeplab_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
+                                          val_loader=val_dataloader,
+                                          criterion=criterion, optimizer=optimizer
+                                          , scheduler=scheduler, early_stopping=early_stopping,
+                                          model_name=cfg.model.name,
+                                          out_dir=model_dir, device=device,
+                                          num_epochs=cfg.opt.epochs)
     else:
-        training_cycle(cfg=cfg, model=model, train_loader=train_dataloader, val_loader=val_dataloader,
-                       criterion=criterion,
-                       optimizer=optimizer
-                       , scheduler=scheduler, early_stopping=early_stopping,
-                       model_name=cfg.model.name,
-                       out_dir=model_dir, device=device,
-                       num_epochs=cfg.opt.epochs)
+        raise NotImplementedError("This function is not yet implemented.")
 
-
-
+    # Use 1-channel with value from 0 to n-classes >>> crossentropy loss (apply softmax on the output of the model)
+    # use n-channels with value 0 or 1 >>> bce loss or bce (apply sigmoid to ouput) or bcewith logit loss (without applyng sigmoid) for multi label
+                                            # crossentropy loss for multiclass?
+    # in this last case, apply argmax to select wich classes is the most probable
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='deeplab_k_fold', help="Path to the input image")
+    parser.add_argument("--config_name", default='deeplab_k_fold_multiclass', help="Path to the input image")
     parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()

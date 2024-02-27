@@ -9,6 +9,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import cv2
 import torchvision.transforms as T
+import torch
 
 '''
 torch transform act naturally on the PIL image
@@ -210,6 +211,141 @@ class KFoldDataframe(Dataset):
                 y = y / 255.
 
             return x, y
+
+        else:
+            if self.transform is not None:
+                transformed = self.transform(image=image)
+                x = transformed['image']
+            else:
+                transformed = self.base_transform(image=image)
+                x = transformed['image']
+            return x
+
+
+class KFoldDataframeMulticlass(Dataset):
+    """Image (semantic) segmentation dataset."""
+
+    def __init__(self, data_path, df_path, df=None, idxs=None, transform=None,
+                 test=False, normalize_imagenet=False, cropped=True, from_full_to_crop=False, n_classes = 2):
+        """
+        Args:
+            root_dir (string): Root directory of the dataset containing the images + annotations.
+
+        """
+        self.root_dir = data_path
+        self.df_path = df_path
+        self.df = df
+        self.images_dir = os.path.join(Path(self.root_dir), 'images')
+        self.masks_dir = os.path.join(Path(self.root_dir), 'masks')
+        self.indices = idxs
+        self.transform = transform
+        self.test = test
+        self.normalize_imagenet = normalize_imagenet
+        self.cropped = cropped
+        self.from_full_to_crop = from_full_to_crop
+        self.n_classes = n_classes
+
+        if self.df is None:
+            if self.cropped:
+                self.df_names = pd.read_csv(os.path.join(self.df_path, "cropped_filenames.csv"))
+                self.images_file_names = self.df_names['images']
+                self.masks_file_names = self.df_names['masks']
+            else:
+                self.df_names = pd.read_csv(os.path.join(self.df_path, "full_size_filenames.csv"))
+
+                if self.from_full_to_crop:
+                    self.cropped_image_files = os.listdir(self.images_dir)
+                    self.df_names = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in range(len(self.df_names)) for crop_fh in
+                                  self.cropped_image_files if 'cropped_' + self.df_names['images'].values[idx].split('.')[0]
+                                     == '_'.join(crop_fh.split('_')[:-2])]
+
+                    self.images_file_names = [x[0] for x in self.df_names]
+                    self.masks_file_names = [x[1] for x in self.df_names]
+                else:
+                    self.images_file_names = self.df_names['images']
+                    self.masks_file_names = self.df_names['masks']
+
+        else:
+            self.images_file_names = self.df['images']
+            self.masks_file_names = self.df['masks']
+
+        if self.normalize_imagenet:
+            self.mean = (0.485, 0.456, 0.406, 0)
+            self.std = (0.229, 0.224, 0.225)
+        else:
+            self.mean = (0.0, 0.0, 0.0)
+            self.std = (1.0, 1.0, 1.0)
+
+        self.base_transform = A.Compose(
+            [
+                A.Normalize(mean=self.mean, std=self.std),
+                ToTensorV2(),
+            ])
+
+        self.mask_base_transform = A.Compose(
+            [
+                ToTensorV2(),
+            ])
+
+
+        if self.indices != None:
+            self.images_file_names = [x for ix, x in enumerate(self.images_file_names) if ix in self.indices]
+            if not self.test:
+                self.masks_file_names = [x for ix, x in enumerate(self.masks_file_names) if ix in self.indices]
+
+        self.images = self.images_file_names
+        if not self.test:
+            self.masks = self.masks_file_names
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        image = cv2.imread(os.path.join(self.images_dir, self.images[idx]))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        if not self.test:
+            mask = cv2.imread(os.path.join(self.masks_dir, self.masks[idx]))
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)[:,:,0:1]
+
+            if self.transform is not None:
+                transformed = self.transform(image=image, mask=mask)
+                x = transformed['image']
+                y = transformed['mask']
+                y = y.permute(2, 0, 1)
+                y = y / 255.
+                y = y * self.n_classes
+                y = y.int()
+
+                channels = [torch.zeros_like(y, dtype=torch.float) for _ in range(self.n_classes)]
+
+                # Assign 1 to each channel where tensor equals the channel index
+                for i in range(self.n_classes):
+                    channels[i][y == i+1] = 1
+
+                # Stack the channels to form a multi-channel tensor
+                multi_channel_y = torch.stack(channels, dim=0)
+                multi_channel_y = torch.squeeze(multi_channel_y, 1)
+
+            else:
+                transformed = self.base_transform(image=image, mask=mask)
+                x = transformed['image']
+                y = transformed['mask']
+                y = y.permute(2, 0, 1)
+                y = y / 255.
+                y = y * self.n_classes
+                y = y.int()
+
+                channels = [torch.zeros_like(y, dtype=torch.float) for _ in range(self.n_classes)]
+
+                # Assign 1 to each channel where tensor equals the channel index
+                for i in range(self.n_classes):
+                    channels[i][y == i+1] = 1
+
+                # Stack the channels to form a multi-channel tensor
+                multi_channel_y = torch.stack(channels, dim=0)
+                multi_channel_y = torch.squeeze(multi_channel_y, 1)
+
+            return x, y, multi_channel_y
 
         else:
             if self.transform is not None:
