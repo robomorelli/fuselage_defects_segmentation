@@ -20,6 +20,7 @@ data_labels_path = os.path.join(root,'data/labels')
 data_masks_path = os.path.join(root,'data/masks')
 multiclass_masks_path = os.path.join(root,'data/masks_classes')
 data_masks_comparison_path = os.path.join(root,'data/masks_comparison')
+renamed_masks_path = os.path.join(root,'data/renamed_masks')
 
 to_rename_masks_path = os.path.join(root,'data/segmented_task_masks')
 

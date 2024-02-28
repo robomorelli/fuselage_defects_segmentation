@@ -217,7 +217,7 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
             for i, (inputs, masks, masks_multi) in enumerate(tepoch):
 
                 inputs, masks = inputs.to(device), masks.to(device)
-                print(np.unique(masks.max()))
+                #print(np.unique(masks.cpu().max()))
 
                 optimizer.zero_grad()
                 outputs = model(inputs)['out']
