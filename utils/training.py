@@ -217,6 +217,7 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
             for i, (inputs, masks, masks_multi) in enumerate(tepoch):
 
                 inputs, masks = inputs.to(device), masks.to(device)
+                print(np.unique(masks.max()))
 
                 optimizer.zero_grad()
                 outputs = model(inputs)['out']
@@ -234,8 +235,7 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
                 tepoch.set_postfix(loss=running_loss/(i+1)) #,dice_loss=running_dice_loss/(i+1))
 
             # Print average training loss for the epoch
-            print(f"Epoch {epoch + 1}/{num_epochs}, Training Loss: {running_loss / len(train_loader)},"
-                  f"Training Dice metric: {running_dice_loss / len(train_loader)}")
+            print(f"Epoch {epoch + 1}/{num_epochs}, Training Loss: {running_loss / len(train_loader)}")
             train_losses.append(running_loss / len(train_loader))
 
             # Validation loop
@@ -261,11 +261,11 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
                         vepoch.set_postfix(loss=running_loss/(i+1))#, dice_loss=running_dice_loss/(i+1))
 
                 val_loss_epoch = running_loss / len(val_loader)
-                val_dice_loss_epoch = running_dice_loss / len(val_loader)
+                #val_dice_loss_epoch = running_dice_loss / len(val_loader)
                 val_losses.append(val_loss_epoch)
 
                 scheduler.step(val_loss_epoch)
-                print('eval loss {} val Dice metric: {}'.format(val_loss_epoch, val_dice_loss_epoch))
+                print('eval loss {} '.format(val_loss_epoch))#, val_dice_loss_epoch))
 
                 early_stopping(val_loss_epoch)
                 if not cfg.opt.save_each_epoch:

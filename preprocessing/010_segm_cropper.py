@@ -38,7 +38,6 @@ def crop_images(args):
     crop_size = args.crop_size  # Adjust this according to your needs
     shift = args.step_size  # Adjust this according to your needs
 
-
     if args.start_from_scratch:
         if os.path.exists(image_output_folder):
             shutil.rmtree(image_output_folder)
@@ -77,6 +76,7 @@ def crop_images(args):
             with Image.open(masks_input_path) as msk:
                 # Get the width and height of the image
                 width, height = msk.size
+                msk = msk.convert('L')
 
                 # Iterate over the image, cropping and saving
                 for y in range(0, height, shift):
@@ -92,26 +92,15 @@ def crop_images(args):
                             cropped_img = img.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
                             cropped_msk = msk.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
 
-                        if len(np.array(cropped_msk).shape) > 2 and np.array(cropped_msk).shape[-1] > 3:
-                            if np.sum(np.array(cropped_msk)[:,:,:3]) > 1:
-                                # Save the cropped image to the output folder
-                                cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
-                                cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
-                                #print(np.unique(np.array(cropped_msk)[:,:,:3]))
-                            else:
-                                if random.random() >= 1 - save_bkg_perc:
-                                    cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
-                                    cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
+                        if np.sum(np.array(cropped_msk)) > 1:
+                            # Save the cropped image to the output folder
+                            cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
+                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
+                            #print(np.unique(np.array(cropped_msk)[:,:,:3]))
                         else:
-                            if np.sum(np.array(cropped_msk)) > 1:
-                                # Save the cropped image to the output folder
+                            if random.random() >= 1 - save_bkg_perc:
                                 cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
                                 cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
-                                #print(np.unique(np.array(cropped_msk)[:,:,:3]))
-                            else:
-                                if random.random() >= 1 - save_bkg_perc:
-                                    cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")

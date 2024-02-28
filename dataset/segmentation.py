@@ -312,6 +312,7 @@ class KFoldDataframeMulticlass(Dataset):
                 x = transformed['image']
                 y = transformed['mask']
                 y = y.permute(2, 0, 1)
+                y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
                 y = y / 255.
                 y = y * self.n_classes
                 y = y.int()
@@ -331,6 +332,7 @@ class KFoldDataframeMulticlass(Dataset):
                 x = transformed['image']
                 y = transformed['mask']
                 y = y.permute(2, 0, 1)
+                y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
                 y = y / 255.
                 y = y * self.n_classes
                 y = y.int()
