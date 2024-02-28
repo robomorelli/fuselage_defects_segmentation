@@ -226,7 +226,9 @@ class KFoldDataframeMulticlass(Dataset):
     """Image (semantic) segmentation dataset."""
 
     def __init__(self, data_path, df_path, df=None, idxs=None, transform=None,
-                 test=False, normalize_imagenet=False, cropped=True, from_full_to_crop=False, n_classes = 2):
+                 test=False, normalize_imagenet=False,
+                 cropped=True, from_full_to_crop=False, n_classes = 2,
+                 rescale_before_norm=False):
         """
         Args:
             root_dir (string): Root directory of the dataset containing the images + annotations.
@@ -244,6 +246,7 @@ class KFoldDataframeMulticlass(Dataset):
         self.cropped = cropped
         self.from_full_to_crop = from_full_to_crop
         self.n_classes = n_classes
+        self.rescale_before_norm = rescale_before_norm
 
         if self.df is None:
             if self.cropped:
@@ -312,7 +315,8 @@ class KFoldDataframeMulticlass(Dataset):
                 x = transformed['image']
                 y = transformed['mask']
                 y = y.permute(2, 0, 1)
-                y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
+                if self.rescale_before_norm:
+                    y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
                 y = y / 255.
                 y = y * self.n_classes
                 y = y.int()
@@ -332,7 +336,8 @@ class KFoldDataframeMulticlass(Dataset):
                 x = transformed['image']
                 y = transformed['mask']
                 y = y.permute(2, 0, 1)
-                y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
+                if self.rescale_before_norm:
+                    y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
                 y = y / 255.
                 y = y * self.n_classes
                 y = y.int()
