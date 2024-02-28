@@ -14,7 +14,7 @@ dataset:
 model:
   name: "model"
   encoder_name: 'deeplabv3_resnet101'
-  exp_name: 'deeplab_k_fold'
+  exp_name: 'deeplab_k_fold_multiclass'
   remove_aux: 1
   num_classes: Null
   multichannel: 1
@@ -25,7 +25,7 @@ opt:
   lr_patience: 6
   epochs: 200
   num_workers: 0
-  logit_loss: 1
+  logit_loss: 0
   pos_weight: Null  #Null
   from_last_to_unfreeze: 10000
   save_each_epoch: 0
