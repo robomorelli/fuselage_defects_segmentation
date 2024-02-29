@@ -10,6 +10,7 @@ dataset:
   normalize_imagenet: 0
   automatic_normalize: 0
   pil_version: 0
+  #rescale_befor_norm: 0
 
 model:
   name: "model"

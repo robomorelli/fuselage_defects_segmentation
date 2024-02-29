@@ -317,8 +317,8 @@ class KFoldDataframeMulticlass(Dataset):
                 y = y.permute(2, 0, 1)
                 if self.rescale_before_norm:
                     y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
-                y = y / 255.
-                y = y * self.n_classes
+                #y = y / 255.
+                #y = y * self.n_classes
                 y = y.int()
 
                 channels = [torch.zeros_like(y, dtype=torch.float) for _ in range(self.n_classes)]
@@ -338,8 +338,8 @@ class KFoldDataframeMulticlass(Dataset):
                 y = y.permute(2, 0, 1)
                 if self.rescale_before_norm:
                     y = ((y - 0)/(self.n_classes - 0)) * (255 - 0)
-                y = y / 255.
-                y = y * self.n_classes
+                #y = y / 255.
+                #y = y * self.n_classes
                 y = y.int()
 
                 channels = [torch.zeros_like(y, dtype=torch.float) for _ in range(self.n_classes)]

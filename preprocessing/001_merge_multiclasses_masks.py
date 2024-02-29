@@ -129,16 +129,22 @@ def main(args):
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
             mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
             for label in reversed(priority_list):
-                channel = masks_collector[label].astype(np.uint8)[:,:,:1]
+                channel = masks_collector[label].astype(np.uint8)[:, :, :1]
+
+                #if "00000003_2_mask" in png_file:
+                #    print('here')
 
                 #mask_viz = mask_viz + channel * mapping_dict_viz[label]
                 #mask = mask + channel * mapping_dict[label]
                 mask_viz[channel == 1] = mapping_dict_viz[label]
-                mask[channel==1] = mapping_dict[label]
+                mask[channel == 1] = mapping_dict[label]
 
             #mask = mask / 255.
-            plt.imsave(os.path.join(viz_folder, png_file), np.squeeze(mask_viz), cmap='gray')
-            plt.imsave(os.path.join(output_folder, png_file), np.squeeze(mask), cmap='gray')
+
+            #plt.imsave(os.path.join(viz_folder, png_file), np.squeeze(mask_viz), cmap='gray')
+            #plt.imsave(os.path.join(output_folder, png_file), np.squeeze(mask))
+            cv2.imwrite(os.path.join(viz_folder, png_file), np.squeeze(mask_viz))
+            cv2.imwrite(os.path.join(output_folder, png_file), np.squeeze(mask))
             print('mask unique value', np.unique(mask))
             print('mask viz unique value', np.unique(mask_viz))
             if len(np.unique(mask)) > len(list(mapping_dict.values())) + 1:
