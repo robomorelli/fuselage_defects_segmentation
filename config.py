@@ -14,7 +14,11 @@ conf_path = os.path.join(root,'configuration')
 # Train data path
 data_path = os.path.join(root,'data')
 cropped_data_path = os.path.join(root,'data/cropped_data')
+cropped_images_path = os.path.join(root,'data/cropped_data/images')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
+
+cropped_tot_bkg_images_path = os.path.join(root,'data/cropped_data', 'tot_bkg/images')
+
 data_images_path = os.path.join(root,'data/images')
 data_labels_path = os.path.join(root,'data/labels')
 data_masks_path = os.path.join(root,'data/masks')
@@ -38,6 +42,9 @@ split1_k_fold_data_path = os.path.join(root,'data/k-fold/fold_1')
 cropped_train_renamed_masks_path = os.path.join(root,'data/train/cropped_data/renamed_masks')
 cropped_train_threshold_results = os.path.join(root,'data/train/cropped_data/threshold_masks')
 
+cropped_tot_bkg_renamed_masks_path = os.path.join(root, 'data/cropped_data/tot_bkg/renamed_masks')
+cropped_renamed_masks_path = os.path.join(root, 'data/cropped_data/renamed_masks')
+
 train_report_path = os.path.join(root,'data/train/report/data_report.csv')
 train_filtered_report_path = os.path.join(root,'data/train/filtered/report/data_report.csv')
 
@@ -57,6 +64,7 @@ cropped_val_images_path = os.path.join(root, 'data/val/cropped_data/images')
 cropped_val_masks_path = os.path.join(root, 'data/val/cropped_data/masks')
 cropped_val_tot_bkg_images_path = os.path.join(root, 'data/val/cropped_data/tot_bkg/images')
 cropped_val_tot_bkg_masks_path = os.path.join(root, 'data/val/cropped_data/tot_bkg/masks')
+
 
 # Test data path
 test_data_path = os.path.join(root,'data/test')

@@ -7,8 +7,12 @@ from config import *
 #name = "fusolage_defects"
 dataset_dir = Path(train_images_path).parent.as_posix()
 
-data_path = data_images_path
-labels_path = renamed_masks_path
+data_path = cropped_images_path
+labels_path = cropped_renamed_masks_path
+
+#data_path = cropped_tot_bkg_images_path
+#labels_path = cropped_tot_bkg_renamed_masks_path
+
 
 # Create the dataset
 dataset = fo.Dataset.from_dir(

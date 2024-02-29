@@ -181,8 +181,7 @@ def main(args):
                             n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
     val_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=val_df_path,
                                  transform=val_transform,
-                                cropped=cfg.dataset.cropped, n_classes = num_classes)
-                                #,rescale_before_norm=cfg.dataset.rescale_before_norm)
+                                cropped=cfg.dataset.cropped, n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)

@@ -26,7 +26,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--renamed_masks_path", default=renamed_masks_path, help="Path to the input image")
+    parser.add_argument("--renamed_masks_path", default=cropped_renamed_masks_path , help="Path to the input image")
 
     args = parser.parse_args()
     main(args)

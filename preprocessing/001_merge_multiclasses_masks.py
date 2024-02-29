@@ -68,8 +68,6 @@ def main(args):
         yaml.dump(mapping_dict, f)
 
 
-
-
     for png_file in masks_names:
         if png_file in os.listdir(output_folder):
             continue
@@ -130,10 +128,13 @@ def main(args):
         elif mask_type == 'pixel-wise':
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
             mask_viz = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.uint8)
-            for label in folds:
-                addend = masks_collector[label].astype(np.uint8)[:,:,:1]
-                mask_viz = mask_viz + addend * mapping_dict_viz[label]
-                mask = mask + addend * mapping_dict[label]
+            for label in reversed(priority_list):
+                channel = masks_collector[label].astype(np.uint8)[:,:,:1]
+
+                #mask_viz = mask_viz + channel * mapping_dict_viz[label]
+                #mask = mask + channel * mapping_dict[label]
+                mask_viz[channel == 1] = mapping_dict_viz[label]
+                mask[channel==1] = mapping_dict[label]
 
             #mask = mask / 255.
             plt.imsave(os.path.join(viz_folder, png_file), np.squeeze(mask_viz), cmap='gray')
@@ -155,7 +156,7 @@ if __name__ == '__main__':
     parser.add_argument("--output_folder", default=data_masks_path, help="Path to the input image")
     parser.add_argument("--type", default='pixel-wise', help="[channel-wise, pixel-wise]")
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
-    parser.add_argument('--priority_list', nargs='+', default=['1', 'Mark', 'Graffio'], help='List of items')
+    parser.add_argument('--priority_list', nargs='+', default=['0', 'Mark', 'Graffio'], help='List of items')
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
 
     args = parser.parse_args()

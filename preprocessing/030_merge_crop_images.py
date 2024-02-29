@@ -1,67 +1,10 @@
 import os.path
 import shutil
 import numpy as np
-import matplotlib.pyplot as plt
 import cv2
 import argparse
 from pathlib import Path
-import random
 from config import *
-
-
-def generate_coordinates_outside_bbox(coordinates, num_points):
-    xmin, ymin, xmax, ymax = coordinates
-    outside_coordinates = []
-
-    for _ in range(num_points):
-        x = random.randint(0, xmin) if random.choice([True, False]) else random.randint(xmax, IMG_WIDTH)
-        y = random.randint(0, ymin) if random.choice([True, False]) else random.randint(ymax, IMG_HEIGHT)
-
-        outside_coordinates.append((x, y))
-
-    return outside_coordinates
-
-
-def put_bbox_on_image(image, coordinates, labels):
-
-    for box, label in zip(coordinates, labels):
-        x1, y1, x2, y2 = box
-        left = x1
-        top = y1
-        right = x2
-        bottom = y2
-
-        # Draw bounding box
-        color = (0, 255, 0)  # Green color for the bounding box
-        thickness = 2
-        cv2.rectangle(image, (left, top), (right, bottom), color, thickness)
-
-        # Draw label
-        label_text = str(label)
-        if class_names is not None:
-            label_text = class_names[label]
-
-        label_position = (left, top - 10)  # Adjust label position
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.5
-        font_thickness = 1
-        cv2.putText(image, label_text, label_position, font, font_scale, color, font_thickness)
-
-    return image
-
-def show_mask(mask, ax, random_color=False):
-    if random_color:
-        color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
-    else:
-        color = np.array([30/255, 144/255, 255/255, 0.6])
-    h, w = mask.shape[-2:]
-    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
-    ax.imshow(mask_image)
-
-def show_box(box, ax):
-    x0, y0 = box[0], box[1]
-    w, h = box[2] - box[0], box[3] - box[1]
-    ax.add_patch(plt.Rectangle((x0, y0), w, h, edgecolor='green', facecolor=(0,0,0,0), lw=2))
 
 
 def main(args):
