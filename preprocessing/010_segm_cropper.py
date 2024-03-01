@@ -10,6 +10,7 @@ import shutil
 import random
 from tqdm import tqdm
 from pathlib import Path
+import cv2
 from config import *
 
 def has_positive_pixel(mask_path):
@@ -97,16 +98,19 @@ def crop_images(args):
                         if np.sum(np.array(cropped_msk)) > 1:
                             # Save the cropped image to the output folder
                             #print(np.unique(cropped_msk), msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
-                            plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                       np.array(cropped_msk, dtype='uint8'), cmap='gray')
+                            #plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
+                            #           np.array(cropped_msk, dtype='uint8'), cmap='gray')
                             #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                             #cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
                             cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
+                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
+                                        np.squeeze(cropped_msk))
 
                         else:
                             if random.random() >= 1 - save_bkg_perc:
-                                plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                           np.array(cropped_msk, dtype='uint8'), cmap='gray')
+                                #plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
+                                #           np.array(cropped_msk, dtype='uint8'), cmap='gray')
+                                cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)), np.squeeze(cropped_msk))
                                 #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                                 cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
 if __name__ == "__main__":
