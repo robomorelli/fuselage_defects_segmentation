@@ -194,12 +194,20 @@ def main(args):
                 raise NotImplementedError
             weight = cfg.opt.weight
             weight = weight if isinstance(weight, torch.FloatTensor) else torch.FloatTensor(weight)
-            criterion = torch.nn.CrossEntropyLoss(weight=weight).to(
-                device)  # weight (Tensor, optional): a manual rescaling weight given
-            # to each class as to be a Tensor of size `C` and floating point dtype
-            print('crossentropy with pos weights')
+            if cfg.opt.ignore_index is not None:
+                criterion = torch.nn.CrossEntropyLoss(weight=weight, ignore_idex=cfg.opt.ignore_index).to(
+                    device)  # weight (Tensor, optional): a manual rescaling weight given
+                # to each class as to be a Tensor of size `C` and floating point dtype
+            else:
+                criterion = torch.nn.CrossEntropyLoss(weight=weight).to(
+                    device)  # weight (Tensor, optional): a manual rescaling weight given
+                # to each class as to be a Tensor of size `C` and floating point dtype
+                print('crossentropy with pos weights')
         else:
-            criterion = torch.nn.CrossEntropyLoss()
+            if cfg.opt.ignore_index is not None:
+                criterion = torch.nn.CrossEntropyLoss(ignore_idex=cfg.opt.ignore_index)
+            else:
+                criterion = torch.nn.CrossEntropyLoss()
     else:
         criterion = torch.nn.BCELoss()
         print('BCE')
