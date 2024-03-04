@@ -189,13 +189,13 @@ def main(args):
                                 drop_last=True)
 
     if cfg.opt.crossentropy_loss:
-        if cfg.opt.pos_weight is not None:
-            if cfg.opt.pos_weight == 0:
+        if cfg.opt.weight is not None:
+            if cfg.opt.weight == 0:
                 raise NotImplementedError
-            weight_pos = [cfg.opt.pos_weight] * num_classes
-            weight_pos = weight_pos if isinstance(weight_pos, torch.FloatTensor) else torch.FloatTensor([weight_pos])
-            criterion = torch.nn.CrossEntropyLoss(weight=torch.tensor([weight_pos]).to(
-                device))  # weight (Tensor, optional): a manual rescaling weight given
+            weight = cfg.opt.weight
+            weight = weight if isinstance(weight, torch.FloatTensor) else torch.FloatTensor(weight)
+            criterion = torch.nn.CrossEntropyLoss(weight=weight).to(
+                device)  # weight (Tensor, optional): a manual rescaling weight given
             # to each class as to be a Tensor of size `C` and floating point dtype
             print('crossentropy with pos weights')
         else:

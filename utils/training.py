@@ -219,6 +219,9 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
                 inputs, masks = inputs.to(device), masks.to(device)
                 print(np.unique(masks.cpu()))
 
+                if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
+                    print('mark or graffio')
+
                 optimizer.zero_grad()
                 outputs = model(inputs)['out']
                 if cfg.opt.crossentropy_loss:
