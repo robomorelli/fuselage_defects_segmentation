@@ -2,7 +2,7 @@ import argparse
 import os
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 from torch.utils.data import DataLoader
-from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass
+from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass, KFoldDataframeMulticlassProcessor
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -21,7 +21,7 @@ import yaml
 import torch
 import torch.optim
 import segmentation_models_pytorch as smp
-from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass
+from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass, training_cycle_segformer_multiclass
 from utils.opt import EarlyStopping
 import yaml
 import json
@@ -118,8 +118,10 @@ def main(args):
 
         encoder_name = cfg.model.encoder_name
     elif 'segformer' in args.config_name:
-        features_extractor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
-
+        if cfg.opt.processor:
+            processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
+        else:
+            processor = None
         # opening a file
         with open('./preprocessing/class_mapping.yaml', 'r') as stream:
             try:
@@ -198,12 +200,13 @@ def main(args):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=train_df_path,
+    train_dataset = KFoldDataframeMulticlassProcessor(data_path=data_path, df_path=train_df_path,
                                    transform=transform, cropped=cfg.dataset.cropped,
-                            n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
-    val_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=val_df_path,
+                            n_classes = num_classes, processor=processor)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
+    val_dataset = KFoldDataframeMulticlassProcessor(data_path=data_path, df_path=val_df_path,
                                  transform=val_transform,
-                                cropped=cfg.dataset.cropped, n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
+                                cropped=cfg.dataset.cropped, n_classes = num_classes,
+                                           processor=processor)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)
@@ -250,7 +253,13 @@ def main(args):
                                           out_dir=model_dir, device=device,
                                           num_epochs=cfg.opt.epochs)
     else:
-        raise NotImplementedError("This method has not been implemented yet")
+        training_cycle_segformer_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
+                                          val_loader=val_dataloader,
+                                          criterion=criterion, optimizer=optimizer
+                                          , scheduler=scheduler, early_stopping=early_stopping,
+                                          model_name=cfg.model.name,
+                                          out_dir=model_dir, device=device,
+                                          num_epochs=cfg.opt.epochs)
 
     # Use 1-channel with value from 0 to n-classes >>> crossentropy loss (apply softmax on the output of the model)
     # use n-channels with value 0 or 1 >>> bce loss or bce (apply sigmoid to ouput) or bcewith logit loss (without applyng sigmoid) for multi label
@@ -260,8 +269,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='deeplab_k_fold_multiclass', help="Path to the input image")
-    parser.add_argument("--fold", default=2, help="Path to the input image")
+    parser.add_argument("--config_name", default='segformer_k_fold_multiclass', help="Path to the input image")
+    parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()
     main(args)

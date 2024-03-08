@@ -26,7 +26,7 @@ torch transform tensor also normalize, albumentation casting to torch does not n
         T.ToTensor(),
         T.Normalize([0.485, 0.456, 0.406, 0], [0.229, 0.224, 0.225, 1])
     ])
-'''
+
 
 processor = SegformerImageProcessor()
 
@@ -37,7 +37,7 @@ def train_transforms(example_batch):
     labels = [x for x in example_batch['label']]
     inputs = processor(images, labels)
     return inputs
-
+'''
 
 class BinarySegmentationAlb(Dataset):
     """Image (semantic) segmentation dataset."""
@@ -363,6 +363,107 @@ class KFoldDataframeMulticlass(Dataset):
                 transformed = self.base_transform(image=image)
                 x = transformed['image']
             return x
+
+
+
+class KFoldDataframeMulticlassProcessor_v2(Dataset):
+    """Image (semantic) segmentation dataset."""
+
+    def __init__(self, data_path, df_path, df=None, idxs=None, transform=None,
+                 test=False, normalize_imagenet=False,
+                 cropped=True, from_full_to_crop=False,processor=None):
+        """
+        Args:
+            root_dir (string): Root directory of the dataset containing the images + annotations.
+
+        """
+        self.root_dir = data_path
+        self.df_path = df_path
+        self.df = df
+        self.images_dir = os.path.join(Path(self.root_dir), 'images')
+        self.masks_dir = os.path.join(Path(self.root_dir), 'masks')
+        self.indices = idxs
+        self.transform = transform
+        self.test = test
+        self.normalize_imagenet = normalize_imagenet
+        self.cropped = cropped
+        self.from_full_to_crop = from_full_to_crop
+        self.processor = processor
+
+        if self.df is None:
+            if self.cropped:
+                self.df_names = pd.read_csv(os.path.join(self.df_path, "cropped_filenames.csv"))
+                self.images_file_names = self.df_names['images']
+                self.masks_file_names = self.df_names['masks']
+            else:
+                self.df_names = pd.read_csv(os.path.join(self.df_path, "full_size_filenames.csv"))
+
+                if self.from_full_to_crop:
+                    self.cropped_image_files = os.listdir(self.images_dir)
+                    self.df_names = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in range(len(self.df_names)) for crop_fh in
+                                  self.cropped_image_files if 'cropped_' + self.df_names['images'].values[idx].split('.')[0]
+                                     == '_'.join(crop_fh.split('_')[:-2])]
+
+                    self.images_file_names = [x[0] for x in self.df_names]
+                    self.masks_file_names = [x[1] for x in self.df_names]
+                else:
+                    self.images_file_names = self.df_names['images']
+                    self.masks_file_names = self.df_names['masks']
+
+        else:
+            self.images_file_names = self.df['images']
+            self.masks_file_names = self.df['masks']
+
+
+        if self.indices != None:
+            self.images_file_names = [x for ix, x in enumerate(self.images_file_names) if ix in self.indices]
+            if not self.test:
+                self.masks_file_names = [x for ix, x in enumerate(self.masks_file_names) if ix in self.indices]
+
+        self.images = self.images_file_names
+        if not self.test:
+            self.masks = self.masks_file_names
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        #image = cv2.imread(os.path.join(self.images_dir, self.images[idx]))
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #mask = cv2.imread(os.path.join(self.masks_dir, self.masks[idx]))
+        #mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)[:,:,0:1]
+
+        image = Image.open(os.path.join(self.images_dir, self.images[idx]))
+        mask = Image.open(os.path.join(self.masks_dir, self.masks[idx]))
+
+
+        ''' 
+        if self.transform is not None:
+            transformed = self.transform(image=image, mask=mask)
+            x = transformed['image']
+            y = transformed['mask']
+            y = y.permute(2, 0, 1)
+            y = y.int()
+
+        else:
+
+            transformed = self.base_transform(image=image, mask=mask)
+            x = transformed['image']
+            y = transformed['mask']
+            y = y.permute(2, 0, 1)
+            y = y.int()
+        '''
+
+        if self.processor:
+            # randomly crop + pad both image and segmentation map to same size
+            encoded_inputs = self.processor(image, mask, return_tensors="pt")
+
+            for k, v in encoded_inputs.items():
+                encoded_inputs[k].squeeze_()  # remove batch dimension
+
+        return encoded_inputs
+
+
 
 class BinarySegmentationPil(Dataset):
     """Image (semantic) segmentation dataset."""

@@ -2,7 +2,7 @@ import argparse
 import os
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 from torch.utils.data import DataLoader
-from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass
+from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass, KFoldDataframeMulticlassProcessor_v2
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -21,13 +21,11 @@ import yaml
 import torch
 import torch.optim
 import segmentation_models_pytorch as smp
-from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass
+from utils.training import training_cycle_segformer_multiclass_v2
 from utils.opt import EarlyStopping
 import yaml
 import json
 import types
-from torchvision.models.segmentation.deeplabv3 import DeepLabHead
-
 import datetime
 from model.resunet import *
 from config import *
@@ -45,7 +43,6 @@ def read_config(config_name):
         cfg = yaml.load(f, Loader=yaml.Loader)
         cfg = json.loads(json.dumps(cfg), object_hook=load_object)
     return cfg
-
 
 def main(args):
     current_date = datetime.datetime.now()
@@ -77,83 +74,24 @@ def main(args):
     else:
         cfg.dataset.cropped = 0
 
-    if args.config_name == 'resnet':
-        model = smp.Unet(cfg.model.encoder_name).to(device)  # By default activation is none
-        params = smp.encoders.get_preprocessing_params(cfg.model.encoder_name)
-
-        for param in model.parameters():
-            param.requires_grad = False
-
-        params = list(model.named_parameters())
-        params.reverse()
-        for ix, (name, param) in enumerate(params):
-            if ix + 1 <= cfg.opt.from_last_to_unfreeze:  # list(model.named_parameters())[-24][1].requires_grad
-                # params_to_update.append(param)          # list(list(model.named_children())[0][1].named_children())
-                param.requires_grad = True
-
-    elif args.config_name == 'c-resunet':
-        model = c_resunet(arch='c-ResUnet', n_features_start=cfg.model.n_features_start, n_out=1,
-                          pretrained=False, progress=True).to(device)
-        encoder_name = cfg.model.encoder_name
-    elif 'deeplab' in args.config_name:
-        model = torch.hub.load('pytorch/vision:v0.10.0', cfg.model.encoder_name, pretrained=True).to(device)
-        # model = models.segmentation.deeplabv3_resnet101(pretrained=True, progress=True)
-
-        if cfg.model.remove_aux:
-            model.aux_classifier = None
-        for param in model.parameters():
-            param.requires_grad = False
-
-        if cfg.model.multichannel:
-            model.classifier = DeepLabHead(2048, num_classes=num_classes+1)
-        else:
-            model.classifier = DeepLabHead(2048, num_classes=1)
-
-        params = list(model.named_parameters())
-        params.reverse()
-        for ix, (name, param) in enumerate(params):
-            if ix + 1 <= cfg.opt.from_last_to_unfreeze:  # list(model.named_parameters())[-24][1].requires_grad
-                # params_to_update.append(param)          # list(list(model.named_children())[0][1].named_children())
-                param.requires_grad = True
-
-        encoder_name = cfg.model.encoder_name
-    elif 'segformer' in args.config_name:
-        features_extractor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
-
-        # opening a file
-        with open('./preprocessing/class_mapping.yaml', 'r') as stream:
-            try:
-                # Converts yaml document to python object
-                label2id = yaml.safe_load(stream)
-            except yaml.YAMLError as e:
-                print(e)
-        label2id['bkg'] = 0
-        id2label = {v: k for k, v in label2id.items()}
-        model = SegformerForSemanticSegmentation.from_pretrained(cfg.model.encoder_name,
-                                                                 num_labels=num_classes + 1,
-                                                                 id2label=id2label,
-                                                                 label2id=label2id,
-                                                                 ignore_mismatched_sizes=True,
-                                                                 )
+    processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
+    with open('./preprocessing/class_mapping.yaml', 'r') as stream:
+        try:
+            # Converts yaml document to python object
+            label2id = yaml.safe_load(stream)
+        except yaml.YAMLError as e:
+            print(e)
+    label2id['bkg'] = 0
+    id2label = {v: k for k, v in label2id.items()}
+    model = SegformerForSemanticSegmentation.from_pretrained(cfg.model.encoder_name,
+                                                             num_labels=num_classes + 1,
+                                                             id2label=id2label,
+                                                             label2id=label2id,
+                                                             ignore_mismatched_sizes=True,
+                                                             )
 
     # Set the model in training mode
     model.to(device)
-
-    if cfg.dataset.normalize_imagenet:
-        print('imagenet normalization')
-        mean = (0.485, 0.456, 0.406)
-        std = (0.229, 0.224, 0.225)
-    elif cfg.dataset.automatic_normalize:
-        std = torch.tensor(params["std"]).view(1, 3, 1, 1)
-        mean = torch.tensor(params["mean"]).view(1, 3, 1, 1)
-        std = tuple(std.squeeze().tolist())
-        mean = tuple(mean.squeeze().tolist())
-        print('imagenet normalization')
-    else:
-        print('0-1 normalization')
-        mean = (0.0, 0.0, 0.0)
-        std = (1.0, 1.0, 1.0)
-
     if cfg.dataset.augmentation:
         print('train augmentation')
 
@@ -161,7 +99,6 @@ def main(args):
             [
                 A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-                A.Normalize(mean=mean, std=std),
                 OneOf([
                     A.VerticalFlip(p=0.3),
                     A.HorizontalFlip(p=0.3),
@@ -187,7 +124,6 @@ def main(args):
                 A.VerticalFlip(p=0.2),
                 A.HorizontalFlip(p=0.2),
                 Blur(blur_limit=15, p=0.3),
-                A.Normalize(mean=mean, std=std),
                 ToTensorV2(),
             ]
         )
@@ -198,12 +134,10 @@ def main(args):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=train_df_path,
-                                   transform=transform, cropped=cfg.dataset.cropped,
-                            n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
-    val_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=val_df_path,
-                                 transform=val_transform,
-                                cropped=cfg.dataset.cropped, n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
+    train_dataset = KFoldDataframeMulticlassProcessor_v2(data_path=data_path, df_path=train_df_path,
+                                   transform=transform, cropped=cfg.dataset.cropped, processor=processor)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
+    val_dataset = KFoldDataframeMulticlassProcessor_v2(data_path=data_path, df_path=val_df_path,
+                                 transform=val_transform, cropped=cfg.dataset.cropped,  processor=processor)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)
@@ -234,34 +168,26 @@ def main(args):
         criterion = torch.nn.BCELoss()
         print('BCE')
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg.opt.lr)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=cfg.opt.lr)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.opt.lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.8, patience=cfg.opt.lr_patience,
                                                            threshold=0.0001, threshold_mode='rel', cooldown=0,
                                                            min_lr=9e-8, verbose=True)
     early_stopping = EarlyStopping(patience=cfg.opt.es_patience)
 
-
-    if 'deeplab' in args.config_name:
-        training_cycle_deeplab_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
-                                          val_loader=val_dataloader,
-                                          criterion=criterion, optimizer=optimizer
-                                          , scheduler=scheduler, early_stopping=early_stopping,
-                                          model_name=cfg.model.name,
-                                          out_dir=model_dir, device=device,
-                                          num_epochs=cfg.opt.epochs)
-    else:
-        raise NotImplementedError("This method has not been implemented yet")
-
-    # Use 1-channel with value from 0 to n-classes >>> crossentropy loss (apply softmax on the output of the model)
-    # use n-channels with value 0 or 1 >>> bce loss or bce (apply sigmoid to ouput) or bcewith logit loss (without applyng sigmoid) for multi label
-                                            # crossentropy loss for multiclass?
-    # in this last case, apply argmax to select wich classes is the most probable
+    training_cycle_segformer_multiclass_v2(cfg=cfg, model=model, train_loader=train_dataloader,
+                                        val_loader=val_dataloader,
+                                        criterion=criterion, optimizer=optimizer
+                                        , scheduler=scheduler, early_stopping=early_stopping,
+                                        model_name=cfg.model.name,
+                                        out_dir=model_dir, device=device,
+                                        num_epochs=cfg.opt.epochs)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='deeplab_k_fold_multiclass', help="Path to the input image")
-    parser.add_argument("--fold", default=2, help="Path to the input image")
+    parser.add_argument("--config_name", default='segformer_k_fold_multiclass', help="Path to the input image")
+    parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()
     main(args)

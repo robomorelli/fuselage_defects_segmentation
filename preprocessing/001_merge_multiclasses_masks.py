@@ -36,6 +36,8 @@ def main(args):
         yaml.dump(mapping_dict_viz, f)
 
     folds_masks_names = []
+    exclude_labels = args.esxclude_labels
+    folds = [f for f in folds if f not in exclude_labels]
     for f in folds:
         folds_masks_names.append(os.listdir(os.path.join(input_folder, f)))
 
@@ -50,6 +52,8 @@ def main(args):
     else:
         enable_priority = False
     priority_list = priority_list[1:]
+
+    priority_list = [x for x in priority_list if x not in exclude_labels]
 
     # Create the output folder if it doesn't exist
     if args.start_from_scratch:
@@ -163,6 +167,7 @@ if __name__ == '__main__':
     parser.add_argument("--type", default='pixel-wise', help="[channel-wise, pixel-wise]")
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
     parser.add_argument('--priority_list', nargs='+', default=['0', 'Mark', 'Graffio'], help='List of items')
+    parser.add_argument('--esxclude_labels', nargs='+', default=[], help='List of items')
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
 
     args = parser.parse_args()

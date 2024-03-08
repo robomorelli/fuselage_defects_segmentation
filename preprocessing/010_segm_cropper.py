@@ -33,10 +33,12 @@ def crop_images(args):
     if args.total_background:
         image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/images')
         mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/masks')
+        mask_output_folder_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_viz/tot_bkg/masks')
         save_bkg_perc = 1.00
     else:
         image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/images')
         mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/masks')
+        mask_output_folder_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_viz/masks')
     crop_size = args.crop_size  # Adjust this according to your needs
     shift = args.step_size  # Adjust this according to your needs
 
@@ -49,14 +51,17 @@ def crop_images(args):
         if os.path.exists(mask_output_folder):
             shutil.rmtree(mask_output_folder)
             os.makedirs(mask_output_folder, exist_ok=True)
+            os.makedirs(mask_output_folder_viz,  exist_ok=True)
         else:
             os.makedirs(mask_output_folder)
+            os.makedirs(mask_output_folder_viz)
     else:
         # Create output folder if it doesn't exist
         if not os.path.exists(image_output_folder):
             os.makedirs(image_output_folder)
         if not os.path.exists(mask_output_folder):
             os.makedirs(mask_output_folder)
+            os.makedirs(mask_output_folder_viz)
 
     # List all image files in the input folder
     images_files = [f for f in os.listdir(images_input_folder) if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
@@ -69,6 +74,7 @@ def crop_images(args):
         masks_input_path = os.path.join(masks_input_folder, mask_file)
         img_output_path = os.path.join(image_output_folder, f"cropped_{image_file}")
         msk_output_path = os.path.join(mask_output_folder, f"cropped_{image_file}")
+        msk_output_path_viz = os.path.join(mask_output_folder_viz, f"cropped_{image_file}")
 
         # Open the image
         with Image.open(image_input_path) as img:
@@ -105,6 +111,9 @@ def crop_images(args):
                             cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
                             cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
                                         np.squeeze(cropped_msk))
+                            cropped_msk = (np.array(cropped_msk)/2.)*255
+                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
+                                        np.squeeze(cropped_msk))
 
                         else:
                             if random.random() >= 1 - save_bkg_perc:
@@ -113,14 +122,17 @@ def crop_images(args):
                                 cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)), np.squeeze(cropped_msk))
                                 #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                                 cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
+                                cropped_msk = (np.array(cropped_msk) / 2.)*255
+                                cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
+                                            np.squeeze(cropped_msk))
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
     parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
-    parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping")
-    parser.add_argument("--save_bkg_perc", type=int, default=0.25, help="probability to retain a background image")
+    parser.add_argument("--step_size", type=int, default=500, help="Step size for the cropping")
+    parser.add_argument("--save_bkg_perc", type=int, default=0.05, help="probability to retain a background image")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")

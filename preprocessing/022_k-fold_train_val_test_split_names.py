@@ -24,7 +24,6 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     random.seed(seed, version=2)
 
     image_path = os.path.join(data_path, 'images')
-    #mask_path = os.path.join(data_path, 'masks')
 
     output_dir = os.path.join(data_path, 'k-fold')
     if args.start_from_scratch:
