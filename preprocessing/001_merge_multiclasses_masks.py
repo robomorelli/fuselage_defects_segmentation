@@ -168,7 +168,7 @@ if __name__ == '__main__':
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
     parser.add_argument('--priority_list', nargs='+', default=['0', 'Mark', 'Graffio'], help='List of items')
     parser.add_argument('--esxclude_labels', nargs='+', default=[], help='List of items')
-    parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
+    parser.add_argument("--start_from_scratch", type=int, default=0, help="remove all the filtered_images into save_path dir")
 
     args = parser.parse_args()
     main(args)

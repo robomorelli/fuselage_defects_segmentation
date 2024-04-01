@@ -145,7 +145,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
     parser.add_argument("--data_path", default=data_path, help="Path to the input image")
-    parser.add_argument("--n_splits", type=int, default=10, help="Patch size for extraction")
+    parser.add_argument("--n_splits", type=int, default=9, help="Patch size for extraction")
     parser.add_argument("--val_ratio", type=int, default=0.15, help="Patch size for extraction")
     parser.add_argument("--seed", type=int, default=123, help="Patch size for extraction")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="Patch size for extraction")

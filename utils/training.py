@@ -213,13 +213,10 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
         running_dice_loss = 0.0
 
         with tqdm(train_loader, unit="batch") as tepoch:
-            for i, (inputs, masks, masks_multi) in enumerate(tepoch):
+            for i, (inputs, masks) in enumerate(tepoch):
 
                 inputs, masks = inputs.to(device), masks.to(device)
-                print(np.unique(masks.cpu()))
-
-                if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
-                    print('mark or graffio')
+                #print(np.unique(masks.cpu()))
 
                 optimizer.zero_grad()
                 outputs = model(inputs)['out']
@@ -241,11 +238,10 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
             # Validation loop
             model.eval()
             running_loss = 0.0
-            running_dice_loss = 0.0
 
             with torch.no_grad():
                 with tqdm(val_loader, unit="batch") as vepoch:
-                    for i, (inputs, masks, masks_multi) in enumerate(vepoch):
+                    for i, (inputs, masks) in enumerate(vepoch):
 
                         inputs, masks = inputs.to(device), masks.to(device)
                         outputs = model(inputs)['out']
@@ -256,12 +252,10 @@ def training_cycle_deeplab_multiclass(cfg, model, train_loader, val_loader, crit
                             raise NotImplementedError
 
                         running_loss += loss.item()
-                        #running_dice_loss += dice_loss.item()
 
-                        vepoch.set_postfix(loss=running_loss/(i+1))#, dice_loss=running_dice_loss/(i+1))
+                        vepoch.set_postfix(loss=running_loss/(i+1))  #, dice_loss=running_dice_loss/(i+1))
 
                 val_loss_epoch = running_loss / len(val_loader)
-                #val_dice_loss_epoch = running_dice_loss / len(val_loader)
                 val_losses.append(val_loss_epoch)
 
                 scheduler.step(val_loss_epoch)
@@ -313,19 +307,25 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
     for epoch in range(num_epochs):
         model.train()
         running_loss = 0.0
-        running_dice_loss = 0.0
 
         with tqdm(train_loader, unit="batch") as tepoch:
-            for i, (inputs, masks, masks_multi) in enumerate(tepoch):
+            for i, (inputs, masks) in enumerate(tepoch):
 
-                inputs, masks = inputs.to(device), masks.to(device)
-                print(np.unique(masks.cpu()))
+                #inputs, masks = inputs.to(device), masks.to(device)
+                #print(np.unique(masks.cpu()))
 
-                if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
-                    print('mark or graffio')
+                #if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
+                #    print('mark or graffio')
+
+                # get the inputs;
+                pixel_values = inputs.to(device)
+                labels = masks.to(device)
+
+                outputs = model(pixel_values=pixel_values, labels=labels.long()).logits
+                #loss, logits = outputs.loss, outputs.logits
 
                 optimizer.zero_grad()
-                outputs = model(inputs.squeeze()).logits
+                #outputs = model(inputs.squeeze()).logits
                 upsampled_logits = nn.functional.interpolate(
                     outputs,
                     size=tuple(inputs.shape[-2:]),  # (height, width)
@@ -333,7 +333,7 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                     align_corners=False
                 )
                 if cfg.opt.crossentropy_loss:
-                    loss = criterion(upsampled_logits.float(), masks.squeeze(1).long())
+                    loss = criterion(upsampled_logits.float(), labels.squeeze(1).long())
                 else:
                     raise NotImplementedError
 
@@ -347,61 +347,62 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
             print(f"Epoch {epoch + 1}/{num_epochs}, Training Loss: {running_loss / len(train_loader)}")
             train_losses.append(running_loss / len(train_loader))
 
-            # Validation loop
-            model.eval()
-            running_loss = 0.0
-            running_dice_loss = 0.0
+        # Validation loop
+        model.eval()
+        running_loss = 0.0
 
-            with torch.no_grad():
-                with tqdm(val_loader, unit="batch") as vepoch:
-                    for i, (inputs, masks, masks_multi) in enumerate(vepoch):
+        with torch.no_grad():
+            with tqdm(val_loader, unit="batch") as vepoch:
+                for i, (inputs, masks) in enumerate(vepoch):
 
-                        inputs, masks = inputs.to(device), masks.to(device)
-                        outputs = model(inputs.squeeze()).logits
-                        upsampled_logits = nn.functional.interpolate(
-                            outputs,
-                            size=tuple(inputs.shape[-2:]),  # (height, width)
-                            mode='bilinear',
-                            align_corners=False
-                        )
-                        if cfg.opt.crossentropy_loss:
-                            #one_channel_out = torch.argmax(outputs['out'].softmax(1), 1)
-                            loss = criterion(upsampled_logits.float(), masks.squeeze(1).long())
-                        else:
-                            raise NotImplementedError
+                    # get the inputs;
+                    pixel_values = inputs.to(device)
+                    labels = masks.to(device)
 
-                        running_loss += loss.item()
-                        #running_dice_loss += dice_loss.item()
+                    #print(pixel_values.min(), pixel_values.max())
 
-                        vepoch.set_postfix(loss=running_loss/(i+1))#, dice_loss=running_dice_loss/(i+1))
+                    # if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
+                    #    print('mark or graffio')
 
-                val_loss_epoch = running_loss / len(val_loader)
-                #val_dice_loss_epoch = running_dice_loss / len(val_loader)
-                val_losses.append(val_loss_epoch)
+                    outputs = model(pixel_values=pixel_values, labels=labels.long()).logits
+                    # loss, logits = outputs.loss, outputs.logits
 
-                scheduler.step(val_loss_epoch)
-                print('eval loss {} '.format(val_loss_epoch))#, val_dice_loss_epoch))
+                    # outputs = model(inputs.squeeze()).logits
+                    upsampled_logits = nn.functional.interpolate(
+                        outputs,
+                        size=tuple(inputs.shape[-2:]),  # (height, width)
+                        mode='bilinear',
+                        align_corners=False
+                    )
 
-                early_stopping(val_loss_epoch)
-                if not cfg.opt.save_each_epoch:
+                    #inputs, masks = inputs.to(device), masks.to(device)
+                    #outputs = model(inputs.squeeze()).logits
 
-                    if early_stopping.early_stop:
-                        break
-                    if val_loss_epoch < val_loss:
-                        print('val_loss improved from {} to {}, saving model  {} to {}' \
-                              .format(val_loss, val_loss_epoch, model_name, out_dir))
-                        torch.save({
-                            'cfg': cfg,
-                            'epoch': epoch,
-                            'model_state_dict': model.state_dict(),
-                            'optimizer_state_dict': optimizer.state_dict(),
-                            'val_loss': val_loss_epoch,
-                            'train_loss_history': train_losses,
-                            'val_loss_history': val_losses,
-                        }, out_dir + '/{}.pth'.format(model_name))
-                        val_loss = val_loss_epoch
-                else:
-                    print('val_loss from {} to {}, saving model  {} to {}' \
+                    if cfg.opt.crossentropy_loss:
+                        #one_channel_out = torch.argmax(outputs['out'].softmax(1), 1)
+                        loss = criterion(upsampled_logits.float(), labels.squeeze(1).long())
+                    else:
+                        raise NotImplementedError
+
+                    running_loss += loss.item()
+                    #running_dice_loss += dice_loss.item()
+
+                    vepoch.set_postfix(loss=running_loss/(i+1))#, dice_loss=running_dice_loss/(i+1))
+
+            val_loss_epoch = running_loss / len(val_loader)
+            #val_dice_loss_epoch = running_dice_loss / len(val_loader)
+            val_losses.append(val_loss_epoch)
+
+            scheduler.step(val_loss_epoch)
+            print('eval loss {} '.format(val_loss_epoch))#, val_dice_loss_epoch))
+
+            early_stopping(val_loss_epoch)
+            if not cfg.opt.save_each_epoch:
+
+                if early_stopping.early_stop:
+                    break
+                if val_loss_epoch < val_loss:
+                    print('val_loss improved from {} to {}, saving model  {} to {}' \
                           .format(val_loss, val_loss_epoch, model_name, out_dir))
                     torch.save({
                         'cfg': cfg,
@@ -413,6 +414,19 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                         'val_loss_history': val_losses,
                     }, out_dir + '/{}.pth'.format(model_name))
                     val_loss = val_loss_epoch
+            else:
+                print('val_loss from {} to {}, saving model  {} to {}' \
+                      .format(val_loss, val_loss_epoch, model_name, out_dir))
+                torch.save({
+                    'cfg': cfg,
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'val_loss': val_loss_epoch,
+                    'train_loss_history': train_losses,
+                    'val_loss_history': val_losses,
+                }, out_dir + '/{}.pth'.format(model_name))
+                val_loss = val_loss_epoch
 
 
 
@@ -432,16 +446,16 @@ def training_cycle_segformer_multiclass_v2(cfg, model, train_loader, val_loader,
         running_loss = 0.0
 
         with tqdm(train_loader, unit="batch") as tepoch:
-            for i, batch in enumerate(tepoch):
+            for i, (image, mask) in enumerate(tepoch):
 
                 optimizer.zero_grad()
 
                 # get the inputs;
-                pixel_values = batch["pixel_values"].to(device)
-                labels = batch["labels"].to(device)
+                pixel_values = image.to(device)
+                labels = mask.to(device)
 
-                if 1 in list(np.unique(labels.cpu())) or 2 in list(np.unique(labels.cpu())):
-                    print('mark or graffio')
+                #if 1 in list(np.unique(labels.cpu())) or 2 in list(np.unique(labels.cpu())):
+                #    print('mark or graffio')
 
                 outputs = model(pixel_values=pixel_values, labels=labels)
                 loss, logits = outputs.loss, outputs.logits
@@ -456,51 +470,38 @@ def training_cycle_segformer_multiclass_v2(cfg, model, train_loader, val_loader,
             print(f"Epoch {epoch + 1}/{num_epochs}, Training Loss: {running_loss / len(train_loader)}")
             train_losses.append(running_loss / len(train_loader))
 
-            # Validation loop
-            model.eval()
-            running_loss = 0.0
+        # Validation loop
+        model.eval()
+        running_loss = 0.0
 
-            with torch.no_grad():
-                with tqdm(val_loader, unit="batch") as vepoch:
-                    for i, batch in enumerate(vepoch):
+        with torch.no_grad():
+            with tqdm(val_loader, unit="batch") as vepoch:
+                for i, (image, mask) in enumerate(vepoch):
 
-                        # get the inputs;
-                        pixel_values = batch["pixel_values"].to(device)
-                        labels = batch["labels"].to(device)
+                    # get the inputs;
+                    pixel_values = image.to(device)
+                    labels = mask.to(device)
 
-                        outputs = model(pixel_values=pixel_values, labels=labels)
-                        loss, logits = outputs.loss, outputs.logits
+                    outputs = model(pixel_values=pixel_values, labels=labels)
+                    loss, logits = outputs.loss, outputs.logits
 
-                        running_loss += loss.item()
+                    running_loss += loss.item()
 
-                        vepoch.set_postfix(loss=running_loss/(i+1))#, dice_loss=running_dice_loss/(i+1))
+                    vepoch.set_postfix(loss=running_loss/(i+1))#, dice_loss=running_dice_loss/(i+1))
 
-                val_loss_epoch = running_loss / len(val_loader)
-                val_losses.append(val_loss_epoch)
+            val_loss_epoch = running_loss / len(val_loader)
+            val_losses.append(val_loss_epoch)
 
-                scheduler.step(val_loss_epoch)
-                print('eval loss {} '.format(val_loss_epoch))#, val_dice_loss_epoch))
+            scheduler.step(val_loss_epoch)
+            print('eval loss {} '.format(val_loss_epoch))#, val_dice_loss_epoch))
 
-                early_stopping(val_loss_epoch)
-                if not cfg.opt.save_each_epoch:
+            early_stopping(val_loss_epoch)
+            if not cfg.opt.save_each_epoch:
 
-                    if early_stopping.early_stop:
-                        break
-                    if val_loss_epoch < val_loss:
-                        print('val_loss improved from {} to {}, saving model  {} to {}' \
-                              .format(val_loss, val_loss_epoch, model_name, out_dir))
-                        torch.save({
-                            'cfg': cfg,
-                            'epoch': epoch,
-                            'model_state_dict': model.state_dict(),
-                            'optimizer_state_dict': optimizer.state_dict(),
-                            'val_loss': val_loss_epoch,
-                            'train_loss_history': train_losses,
-                            'val_loss_history': val_losses,
-                        }, out_dir + '/{}.pth'.format(model_name))
-                        val_loss = val_loss_epoch
-                else:
-                    print('val_loss from {} to {}, saving model  {} to {}' \
+                if early_stopping.early_stop:
+                    break
+                if val_loss_epoch < val_loss:
+                    print('val_loss improved from {} to {}, saving model  {} to {}' \
                           .format(val_loss, val_loss_epoch, model_name, out_dir))
                     torch.save({
                         'cfg': cfg,
@@ -512,4 +513,17 @@ def training_cycle_segformer_multiclass_v2(cfg, model, train_loader, val_loader,
                         'val_loss_history': val_losses,
                     }, out_dir + '/{}.pth'.format(model_name))
                     val_loss = val_loss_epoch
+            else:
+                print('val_loss from {} to {}, saving model  {} to {}' \
+                      .format(val_loss, val_loss_epoch, model_name, out_dir))
+                torch.save({
+                    'cfg': cfg,
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'val_loss': val_loss_epoch,
+                    'train_loss_history': train_losses,
+                    'val_loss_history': val_losses,
+                }, out_dir + '/{}.pth'.format(model_name))
+                val_loss = val_loss_epoch
 

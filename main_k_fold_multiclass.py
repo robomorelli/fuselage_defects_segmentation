@@ -2,7 +2,7 @@ import argparse
 import os
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 from torch.utils.data import DataLoader
-from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass
+from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass, KFoldDataframeMulticlassProcessor_v2
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -21,7 +21,7 @@ import yaml
 import torch
 import torch.optim
 import segmentation_models_pytorch as smp
-from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass
+from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass, training_cycle_segformer_multiclass
 from utils.opt import EarlyStopping
 import yaml
 import json
@@ -91,13 +91,13 @@ def main(args):
                 # params_to_update.append(param)          # list(list(model.named_children())[0][1].named_children())
                 param.requires_grad = True
 
-    elif args.config_name == 'c-resunet':
-        model = c_resunet(arch='c-ResUnet', n_features_start=cfg.model.n_features_start, n_out=1,
-                          pretrained=False, progress=True).to(device)
-        encoder_name = cfg.model.encoder_name
-    elif 'deeplab' in args.config_name:
+
+    if 'deeplab' in args.config_name:
+        if cfg.opt.processor:
+            processor = None
+        else:
+            processor = None
         model = torch.hub.load('pytorch/vision:v0.10.0', cfg.model.encoder_name, pretrained=True).to(device)
-        # model = models.segmentation.deeplabv3_resnet101(pretrained=True, progress=True)
 
         if cfg.model.remove_aux:
             model.aux_classifier = None
@@ -109,17 +109,12 @@ def main(args):
         else:
             model.classifier = DeepLabHead(2048, num_classes=1)
 
-        params = list(model.named_parameters())
-        params.reverse()
-        for ix, (name, param) in enumerate(params):
-            if ix + 1 <= cfg.opt.from_last_to_unfreeze:  # list(model.named_parameters())[-24][1].requires_grad
-                # params_to_update.append(param)          # list(list(model.named_children())[0][1].named_children())
-                param.requires_grad = True
-
         encoder_name = cfg.model.encoder_name
     elif 'segformer' in args.config_name:
-        features_extractor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
-
+        if cfg.opt.processor:
+            processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
+        else:
+            processor = None
         # opening a file
         with open('./preprocessing/class_mapping.yaml', 'r') as stream:
             try:
@@ -136,61 +131,81 @@ def main(args):
                                                                  ignore_mismatched_sizes=True,
                                                                  )
 
+    params = list(model.named_parameters())
+    params.reverse()
+    for ix, (name, param) in enumerate(params):
+        if ix + 1 <= cfg.opt.from_last_to_unfreeze:  # list(model.named_parameters())[-24][1].requires_grad
+            # params_to_update.append(param)          # list(list(model.named_children())[0][1].named_children())
+            param.requires_grad = True
+
     # Set the model in training mode
     model.to(device)
 
-    if cfg.dataset.normalize_imagenet:
-        print('imagenet normalization')
-        mean = (0.485, 0.456, 0.406)
-        std = (0.229, 0.224, 0.225)
-    elif cfg.dataset.automatic_normalize:
-        std = torch.tensor(params["std"]).view(1, 3, 1, 1)
-        mean = torch.tensor(params["mean"]).view(1, 3, 1, 1)
-        std = tuple(std.squeeze().tolist())
-        mean = tuple(mean.squeeze().tolist())
-        print('imagenet normalization')
-    else:
-        print('0-1 normalization')
-        mean = (0.0, 0.0, 0.0)
-        std = (1.0, 1.0, 1.0)
-
     if cfg.dataset.augmentation:
-        print('train augmentation')
-
-        transform = A.Compose(
-            [
-                A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
-                A.Normalize(mean=mean, std=std),
-                OneOf([
-                    A.VerticalFlip(p=0.3),
-                    A.HorizontalFlip(p=0.3),
-                ], p=0.6),
-                OneOf([
-                    A.ImageCompression(quality_lower=75, p=0.2),
-                    Blur(blur_limit=21, p=0.4),
-                ], p=0.5),
-
-                ToTensorV2(),
-            ]
-        )
+        if cfg.opt.processor:
+            print('train augmentation')
+            transform = A.Compose(
+                [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.VerticalFlip(p=0.2),
+                 A.HorizontalFlip(p=0.2),
+                 Blur(blur_limit=15, p=0.3),
+                 ToTensorV2(),
+                 ], additional_targets={'mask':'mask'}
+            )
+        else:
+            if cfg.dataset.normalize_imagenet:
+                print('imagenet normalization')
+                mean = (0.485, 0.456, 0.406)
+                std = (0.229, 0.224, 0.225)
+            else:
+                print('0-1 normalization')
+                mean = (0.0, 0.0, 0.0)
+                std = (1.0, 1.0, 1.0)
+            transform = A.Compose(
+                [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.VerticalFlip(p=0.2),
+                 A.HorizontalFlip(p=0.2),
+                 Blur(blur_limit=15, p=0.3),
+                 A.Normalize(mean=mean, std=std),
+                 ToTensorV2(),
+                 ], additional_targets={'mask':'mask'})
     else:
         transform = None
-        print('no train augmentation')
 
     if cfg.dataset.val_aug:
         print('val augmentation')
-        val_transform = A.Compose(
-            [
-                A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.2),
-                A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.2),
-                A.VerticalFlip(p=0.2),
-                A.HorizontalFlip(p=0.2),
-                Blur(blur_limit=15, p=0.3),
-                A.Normalize(mean=mean, std=std),
-                ToTensorV2(),
-            ]
-        )
+        if cfg.opt.processor:
+            val_transform = A.Compose(
+                [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.VerticalFlip(p=0.2),
+                 A.HorizontalFlip(p=0.2),
+                 Blur(blur_limit=15, p=0.3),
+                 ToTensorV2(),
+                 ], additional_targets={'mask':'mask'}
+            )
+        else:
+            if cfg.dataset.normalize_imagenet:
+                print('imagenet normalization')
+                mean = (0.485, 0.456, 0.406)
+                std = (0.229, 0.224, 0.225)
+            else:
+                print('0-1 normalization')
+                mean = (0.0, 0.0, 0.0)
+                std = (1.0, 1.0, 1.0)
+            val_transform = A.Compose(
+                [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.VerticalFlip(p=0.2),
+                 A.HorizontalFlip(p=0.2),
+                 Blur(blur_limit=15, p=0.3),
+                 A.Normalize(mean=mean, std=std),
+                 ToTensorV2(),
+                 ], additional_targets={'mask': 'mask'}
+            )
+
     else:
         val_transform = None
         print('no val augmentation')
@@ -198,12 +213,13 @@ def main(args):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=train_df_path,
-                                   transform=transform, cropped=cfg.dataset.cropped,
-                            n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
-    val_dataset = KFoldDataframeMulticlass(data_path=data_path, df_path=val_df_path,
-                                 transform=val_transform,
-                                cropped=cfg.dataset.cropped, n_classes = num_classes)#,rescale_before_norm=cfg.dataset.rescale_before_norm)
+    train_dataset = KFoldDataframeMulticlassProcessor_v2(data_path=data_path, df_path=train_df_path,
+                                   transform=transform, cropped=cfg.dataset.cropped, normalize_imagenet=cfg.dataset.normalize_imagenet,
+                            processor=processor)    #,rescale_before_norm=cfg.dataset.rescale_before_norm)
+    val_dataset = KFoldDataframeMulticlassProcessor_v2(data_path=data_path, df_path=val_df_path,
+                                 transform=val_transform, cropped=cfg.dataset.cropped, normalize_imagenet=cfg.dataset.normalize_imagenet,
+                                processor=processor)    #,rescale_before_norm=cfg.dataset.rescale_before_norm)
+
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers,
                                   drop_last=True)
@@ -250,18 +266,19 @@ def main(args):
                                           out_dir=model_dir, device=device,
                                           num_epochs=cfg.opt.epochs)
     else:
-        raise NotImplementedError("This method has not been implemented yet")
-
-    # Use 1-channel with value from 0 to n-classes >>> crossentropy loss (apply softmax on the output of the model)
-    # use n-channels with value 0 or 1 >>> bce loss or bce (apply sigmoid to ouput) or bcewith logit loss (without applyng sigmoid) for multi label
-                                            # crossentropy loss for multiclass?
-    # in this last case, apply argmax to select wich classes is the most probable
+        training_cycle_segformer_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
+                                          val_loader=val_dataloader,
+                                          criterion=criterion, optimizer=optimizer
+                                          , scheduler=scheduler, early_stopping=early_stopping,
+                                          model_name=cfg.model.name,
+                                          out_dir=model_dir, device=device,
+                                          num_epochs=cfg.opt.epochs)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
     parser.add_argument("--config_name", default='deeplab_k_fold_multiclass', help="Path to the input image")
-    parser.add_argument("--fold", default=2, help="Path to the input image")
+    parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()
     main(args)

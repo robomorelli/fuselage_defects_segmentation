@@ -10,6 +10,14 @@ from albumentations.pytorch import ToTensorV2
 import cv2
 import torchvision.transforms as T
 import torch
+import numpy as np
+from albumentations import (RandomCrop, CenterCrop, ElasticTransform, RGBShift, Rotate,
+                            Compose, ToFloat, FromFloat, RandomRotate90, Flip, OneOf, MotionBlur, MedianBlur, Blur,
+                            Transpose,
+                            ShiftScaleRotate, OpticalDistortion, GridDistortion, RandomBrightnessContrast, VerticalFlip,
+                            HorizontalFlip,
+                            HueSaturationValue,
+                            )
 
 '''
 torch transform act naturally on the PIL image
@@ -371,7 +379,7 @@ class KFoldDataframeMulticlassProcessor_v2(Dataset):
 
     def __init__(self, data_path, df_path, df=None, idxs=None, transform=None,
                  test=False, normalize_imagenet=False,
-                 cropped=True, from_full_to_crop=False,processor=None):
+                 cropped=True, from_full_to_crop=False, processor=None):
         """
         Args:
             root_dir (string): Root directory of the dataset containing the images + annotations.
@@ -424,44 +432,82 @@ class KFoldDataframeMulticlassProcessor_v2(Dataset):
         if not self.test:
             self.masks = self.masks_file_names
 
+        if self.normalize_imagenet:
+            self.mean = (0.485, 0.456, 0.406, 0)
+            self.std = (0.229, 0.224, 0.225)
+        else:
+            self.mean = (0.0, 0.0, 0.0)
+            self.std = (1.0, 1.0, 1.0)
+
+        self.base_transform = A.Compose(
+
+            [
+                A.Normalize(mean=self.mean, std=self.std),
+                ToTensorV2(),
+            ])
+
+        ''' 
+        transform = A.Compose(
+            [
+                A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
+                A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                OneOf([
+                    A.VerticalFlip(p=0.3),
+                    A.HorizontalFlip(p=0.3),
+                ], p=0.6),
+                OneOf([
+                    #A.ImageCompression(quality_lower=75, p=0.2),
+                    Blur(blur_limit=21, p=0.4),
+                ], p=0.5),
+
+                #ToTensorV2(),
+            ], additional_targets={'mask':'mask'}
+        )
+        '''
+
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
-        #image = cv2.imread(os.path.join(self.images_dir, self.images[idx]))
-        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        #mask = cv2.imread(os.path.join(self.masks_dir, self.masks[idx]))
-        #mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)[:,:,0:1]
+        image = cv2.imread(os.path.join(self.images_dir, self.images[idx]))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        mask = cv2.imread(os.path.join(self.masks_dir, self.masks[idx]))
+        mask = np.squeeze(cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)[:,:,0:1])
 
-        image = Image.open(os.path.join(self.images_dir, self.images[idx]))
-        mask = Image.open(os.path.join(self.masks_dir, self.masks[idx]))
+        #image = Image.open(os.path.join(self.images_dir, self.images[idx]))
+        #mask = Image.open(os.path.join(self.masks_dir, self.masks[idx]))
 
-
-        ''' 
         if self.transform is not None:
             transformed = self.transform(image=image, mask=mask)
-            x = transformed['image']
-            y = transformed['mask']
-            y = y.permute(2, 0, 1)
-            y = y.int()
+            image = transformed['image']
+            mask = transformed['mask']
+            #y = y.permute(2, 0, 1)
+            #mask = y.int()
+
+            if self.processor is not None:
+                encoded_inputs = self.processor(image, mask, return_tensors="pt")
+                for k, v in encoded_inputs.items():
+                    encoded_inputs[k].squeeze_()  # remove batch dimension
+
+                image = encoded_inputs["pixel_values"]
+                mask = encoded_inputs["labels"]
 
         else:
+            if self.processor is not None:
+                encoded_inputs = self.processor(image, mask, return_tensors="pt")
+                for k, v in encoded_inputs.items():
+                    encoded_inputs[k].squeeze_()  # remove batch dimension
 
-            transformed = self.base_transform(image=image, mask=mask)
-            x = transformed['image']
-            y = transformed['mask']
-            y = y.permute(2, 0, 1)
-            y = y.int()
-        '''
+                image = encoded_inputs["pixel_values"]
+                mask = encoded_inputs["labels"]
+            else:
+                transformed = self.base_transform(image=image, mask=mask)
+                image = transformed['image']
+                mask = transformed['mask']
+                #y = y.permute(2, 0, 1)
+                #mask = y.int()
 
-        if self.processor:
-            # randomly crop + pad both image and segmentation map to same size
-            encoded_inputs = self.processor(image, mask, return_tensors="pt")
-
-            for k, v in encoded_inputs.items():
-                encoded_inputs[k].squeeze_()  # remove batch dimension
-
-        return encoded_inputs
+        return image, mask
 
 
 
