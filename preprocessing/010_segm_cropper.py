@@ -101,6 +101,7 @@ def crop_images(args):
                             cropped_img = img.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
                             cropped_msk = msk.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
 
+
                         if np.sum(np.array(cropped_msk)) > 1:
                             # Save the cropped image to the output folder
                             #print(np.unique(cropped_msk), msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
