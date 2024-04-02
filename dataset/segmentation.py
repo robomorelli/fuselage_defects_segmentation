@@ -469,6 +469,7 @@ class KFoldDataframeMulticlassProcessor_v2(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
+
         image = cv2.imread(os.path.join(self.images_dir, self.images[idx]))
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         mask = cv2.imread(os.path.join(self.masks_dir, self.masks[idx]))

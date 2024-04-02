@@ -50,8 +50,11 @@ def crop_images(args):
             os.makedirs(image_output_folder)
         if os.path.exists(mask_output_folder):
             shutil.rmtree(mask_output_folder)
+
             os.makedirs(mask_output_folder, exist_ok=True)
-            os.makedirs(mask_output_folder_viz,  exist_ok=True)
+            if os.path.exists(mask_output_folder_viz):
+                shutil.rmtree(mask_output_folder_viz)
+                os.makedirs(mask_output_folder_viz,  exist_ok=True)
         else:
             os.makedirs(mask_output_folder)
             os.makedirs(mask_output_folder_viz)
@@ -110,6 +113,7 @@ def crop_images(args):
                             #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                             #cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
                             cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
+                            cropped_msk = np.array(cropped_msk)*255
                             cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
                                         np.squeeze(cropped_msk))
                             cropped_msk = (np.array(cropped_msk)/2.)*255
@@ -120,22 +124,24 @@ def crop_images(args):
                             if random.random() >= 1 - save_bkg_perc:
                                 #plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
                                 #           np.array(cropped_msk, dtype='uint8'), cmap='gray')
-                                cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)), np.squeeze(cropped_msk))
+                                cropped_msk = np.array(cropped_msk) * 255
+                                cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y))
+                                            , np.squeeze(np.array(cropped_msk)))
                                 #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                                 cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
                                 cropped_msk = (np.array(cropped_msk) / 2.)*255
                                 cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                            np.squeeze(cropped_msk))
+                                            np.squeeze(cropped_msk)*255)
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
     parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
-    parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping")
-    parser.add_argument("--save_bkg_perc", type=int, default=0.25, help="probability to retain a background image")
+    parser.add_argument("--step_size", type=int, default=512, help="Step size for the cropping")
+    parser.add_argument("--save_bkg_perc", type=int, default=1, help="probability to retain a background image")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
-    parser.add_argument("--total_background", type=int, default=0,
+    parser.add_argument("--total_background", type=int, default=1,
                         help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()
 
