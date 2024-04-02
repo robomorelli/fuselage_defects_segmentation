@@ -61,8 +61,6 @@ def main(args):
     else:
         num_classes = cfg.model.num_classes
 
-    random_seed = cfg.dataset.random_seed
-    shuffle = cfg.dataset.shuffle
     data_path = cfg.dataset.data_path
     batch_size = cfg.dataset.batch_size
     num_workers = cfg.opt.num_workers
@@ -76,21 +74,6 @@ def main(args):
         cfg.dataset.cropped = 1
     else:
         cfg.dataset.cropped = 0
-
-    if args.config_name == 'resnet':
-        model = smp.Unet(cfg.model.encoder_name).to(device)  # By default activation is none
-        params = smp.encoders.get_preprocessing_params(cfg.model.encoder_name)
-
-        for param in model.parameters():
-            param.requires_grad = False
-
-        params = list(model.named_parameters())
-        params.reverse()
-        for ix, (name, param) in enumerate(params):
-            if ix + 1 <= cfg.opt.from_last_to_unfreeze:  # list(model.named_parameters())[-24][1].requires_grad
-                # params_to_update.append(param)          # list(list(model.named_children())[0][1].named_children())
-                param.requires_grad = True
-
 
     if 'deeplab' in args.config_name:
         if cfg.opt.processor:
@@ -128,8 +111,7 @@ def main(args):
                                                                  num_labels=num_classes + 1,
                                                                  id2label=id2label,
                                                                  label2id=label2id,
-                                                                 ignore_mismatched_sizes=True,
-                                                                 )
+                                                                 ignore_mismatched_sizes=True)
 
     for param in model.parameters():
         param.requires_grad = False

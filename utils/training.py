@@ -312,7 +312,7 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
             for i, (inputs, masks) in enumerate(tepoch):
 
                 #inputs, masks = inputs.to(device), masks.to(device)
-                #print(np.unique(masks.cpu()))
+                print(np.unique(masks.cpu()))
 
                 #if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
                 #    print('mark or graffio')

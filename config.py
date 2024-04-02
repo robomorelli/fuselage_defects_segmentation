@@ -13,6 +13,7 @@ conf_path = os.path.join(root,'configuration')
 
 # Train data path
 data_path = os.path.join(root,'data')
+full_size_masks_classes_path = os.path.join(root,'data/masks_classes')
 cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_images_path = os.path.join(root,'data/cropped_data/images')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')

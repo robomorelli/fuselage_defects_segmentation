@@ -113,7 +113,7 @@ def crop_images(args):
                             #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                             #cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
                             cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
-                            cropped_msk = np.array(cropped_msk)*255
+                            cropped_msk = np.array(cropped_msk)
                             cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
                                         np.squeeze(cropped_msk))
                             cropped_msk = (np.array(cropped_msk)/2.)*255
@@ -124,7 +124,7 @@ def crop_images(args):
                             if random.random() >= 1 - save_bkg_perc:
                                 #plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
                                 #           np.array(cropped_msk, dtype='uint8'), cmap='gray')
-                                cropped_msk = np.array(cropped_msk) * 255
+                                cropped_msk = np.array(cropped_msk)
                                 cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y))
                                             , np.squeeze(np.array(cropped_msk)))
                                 #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))

@@ -71,7 +71,6 @@ def main(args):
     with open('class_mapping.yaml', 'w') as f:
         yaml.dump(mapping_dict, f)
 
-
     for png_file in masks_names:
         if png_file in os.listdir(output_folder):
             continue
@@ -167,7 +166,7 @@ if __name__ == '__main__':
     parser.add_argument("--type", default='pixel-wise', help="[channel-wise, pixel-wise]")
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
     parser.add_argument('--priority_list', nargs='+', default=['0', 'Mark', 'Graffio'], help='List of items')
-    parser.add_argument('--esxclude_labels', nargs='+', default=[], help='List of items')
+    parser.add_argument('--esxclude_labels', nargs='+', default=['Graffio'], help='List of items')
     parser.add_argument("--start_from_scratch", type=int, default=0, help="remove all the filtered_images into save_path dir")
 
     args = parser.parse_args()
