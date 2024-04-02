@@ -131,6 +131,9 @@ def main(args):
                                                                  ignore_mismatched_sizes=True,
                                                                  )
 
+    for param in model.parameters():
+        param.requires_grad = False
+
     params = list(model.named_parameters())
     params.reverse()
     for ix, (name, param) in enumerate(params):
@@ -277,7 +280,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='deeplab_k_fold_multiclass', help="Path to the input image")
+    parser.add_argument("--config_name", default='segformer_k_fold_multiclass', help="Path to the input image")
     parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()
