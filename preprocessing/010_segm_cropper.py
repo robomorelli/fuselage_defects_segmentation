@@ -131,7 +131,7 @@ def crop_images(args):
                                 cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
                                 cropped_msk = (np.array(cropped_msk) / 2.)*255
                                 cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                            np.squeeze(cropped_msk)*255)
+                                            np.squeeze(cropped_msk))
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")

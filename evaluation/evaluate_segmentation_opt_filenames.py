@@ -150,11 +150,11 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
 
             gt_fh = dataset.images_file_names[i]
 
-            loss = criterion(pred_mask, gt_mask.to(device))
+            #loss = criterion(pred_mask, gt_mask.to(device))
             pred_mask = pred_mask.sigmoid().detach().cpu().numpy()
             gt_mask = gt_mask.detach().cpu().numpy()
-            running_loss += loss.item()
-            mean_loss = running_loss / (i + 1)
+            #running_loss += loss.item()
+            #mean_loss = running_loss / (i + 1)
             #print(running_loss / (i+1))
 
             for th in ths:
