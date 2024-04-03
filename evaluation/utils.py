@@ -171,17 +171,34 @@ def compute_metrics_th(mask, pred, metrics, img_name, th=0.5, obj_size=0, return
 
 def compute_iou_multiclass(mask, pred, img_name,  n_classes=2, obj_size=0, ignore_index=255, reduce_labels=True):
 
-    pred = remove_small_objects(pred, min_size=obj_size, connectivity=1)
+    if mask.max() > n_classes:
+        for i in range(n_classes):
+            mask[mask==np.ceil(255/(i+1))]=n_classes-i
+
+    pred = remove_small_objects(pred, min_size=obj_size, connectivity=1).astype(np.int8)
+    #pred = (pred - 1).astype(np.uint16)
+    #pred = np.clip(pred, 0, 255)
     pred = pred.astype(np.uint16)
     mask = np.squeeze(mask).astype(np.uint16)
     results = mean_iou.compute(predictions=[pred], references=[mask], num_labels=n_classes,
-                               ignore_index=ignore_index, reduce_labels=reduce_labels)
+                               ignore_index=0, reduce_labels=0)
 
     return results
-def compute_metrics_multiclass(mask, pred, metrics, img_name, th=0.5, obj_size=0, return_pred_th=True):
+def compute_metrics_multiclass(mask, pred, metrics, img_name,  n_classes=2, obj_size=0, return_pred_th=True):
     # extract predicted objects and counts
     # pred = pred / 255.
     # pred is already argmax (0-1)
+    channels = [torch.zeros_like(pred, dtype=torch.float) for _ in range(n_classes)]
+
+    # Assign 1 to each channel where tensor equals the channel index
+    for i in range(n_classes):
+        channels[i][pred == i + 1] = 1
+
+    # Stack the channels to form a multi-channel tensor
+    pred = torch.stack(channels, dim=0)
+    pred= torch.squeeze(multi_channel_y, 1)
+
+
     pred = pred.astype(np.uint8) * 255
 
     pred = remove_small_objects(pred, min_size=obj_size, connectivity=1)
