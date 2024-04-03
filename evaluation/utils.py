@@ -175,15 +175,15 @@ def compute_iou_multiclass(mask, pred, img_name,  n_classes=2, obj_size=0, ignor
         for i in range(n_classes):
             mask[mask==np.ceil(255/(i+1))]=n_classes-i
 
-    pred = remove_small_objects(pred, min_size=obj_size, connectivity=1).astype(np.int8)
-    #pred = (pred - 1).astype(np.uint16)
-    #pred = np.clip(pred, 0, 255)
+    pred_mask = remove_small_objects(pred, min_size=obj_size, connectivity=1).astype(np.int8)
+    pred = (pred_mask - 1).astype(np.uint16)
+    pred = np.clip(pred, 0, 255)
     pred = pred.astype(np.uint16)
     mask = np.squeeze(mask).astype(np.uint16)
     results = mean_iou.compute(predictions=[pred], references=[mask], num_labels=n_classes,
-                               ignore_index=0, reduce_labels=0)
+                               ignore_index=255, reduce_labels=1)
 
-    return results
+    return results, pred_mask
 def compute_metrics_multiclass(mask, pred, metrics, img_name,  n_classes=2, obj_size=0, return_pred_th=True):
     # extract predicted objects and counts
     # pred = pred / 255.
