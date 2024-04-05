@@ -112,26 +112,26 @@ def main(args):
 
                 class_gt = np.uint8(gt == class_value)
                 # Perform dilation
-                #class_gt = cv2.dilate(class_gt, kernel, iterations=1)
+                class_gt = cv2.dilate(class_gt, kernel, iterations=2)
 
                 # Find contours
                 contours, _ = cv2.findContours(class_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 contours_mask, _ = cv2.findContours(class_gt, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
                 # Draw contours with different colors depending on the class value
-                color = (0, 255, 0) if class_value == 1 else (0, 0, 255)
+                color = (0, 255, 0) if class_value == 1 else (255, 0, 0)
                 cv2.drawContours(img, contours, -1, color, thickness=2)
-                color = (255, 255, 0) if class_value == 1 else (255, 0, 255)  #cyan and yellow
+                color = (0, 128, 0) if class_value == 1 else (255, 255, 0)
                 cv2.drawContours(img, contours_mask, -1, color, thickness=2)
                 legend = np.zeros((150, IMG_WIDTH, 3), dtype=np.uint8)
                 cv2.putText(legend, 'Mark: Green', (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             2, (0, 255, 0), 4)
-                cv2.putText(legend, 'Graffio : Red', (10, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (0, 0, 255), 4)
-                cv2.putText(legend, 'Mark_gt: Cyan', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(legend, 'Graffio : Blu', (10, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                            2, (255, 0, 0), 4)
+                cv2.putText(legend, 'Mark_gt: Olive', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            2, (0, 128, 0), 4)
+                cv2.putText(legend, 'Graffio_gt : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
                             2, (255, 255, 0), 4)
-                cv2.putText(legend, 'Graffio_gt : Yellow', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (255, 0, 255), 4)
                 #text_positions = [(10, i * 20 + 60) for i in range(len(classes_name))]  # Calculate text positions
                 #[img := cv2.putText(legend, f'{classes_name[i]}', text_pos, cv2.FONT_HERSHEY_SIMPLEX, 2, color,
                 #                           4) for i, (text_pos, color) in enumerate(zip(text_positions, colors))]
