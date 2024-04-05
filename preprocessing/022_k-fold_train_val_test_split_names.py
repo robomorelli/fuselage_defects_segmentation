@@ -10,7 +10,7 @@ from config import *
 
 def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     """
-    Split images and masks into train, validation, and test sets and copy them to the output directory.
+    Split images and masks into train, validation, and test1 sets and copy them to the output directory.
 
     Arguments:
     image_path: Path to the directory containing images.
@@ -123,7 +123,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
         #val_images_filenames.to_csv(os.path.join(val_dir, "images", f'cropped_images_filenames.csv'), index=False)
         #val_masks_filenames.to_csv(os.path.join(val_dir, "masks", f'cropped_masks_filenames.csv'), index=False)
 
-        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test')
+        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test1')
         if os.path.exists(test_dir):
             shutil.rmtree(test_dir)
 

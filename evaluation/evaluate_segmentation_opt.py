@@ -39,7 +39,7 @@ def main(images_path, model_path, ths_num=0, normalize_imagenet=0):
             metrics_path = os.path.join(save_path, metrics_split)
             split = 'val'
 
-    elif 'test' in images_path:
+    elif 'test1' in images_path:
         if "tot_bkg" in images_path:
             metrics_split = 'tot_bkg_metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
@@ -47,7 +47,7 @@ def main(images_path, model_path, ths_num=0, normalize_imagenet=0):
         else:
             metrics_split = 'metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
-            split = 'test'
+            split = 'test1'
 
     if not os.path.exists(os.path.join(save_path, metrics_split)):
         os.makedirs(metrics_path)

@@ -8,7 +8,7 @@ from config import *
 
 def main(data_path, n_splits=3, val_ratio=0.15, seed=123):
     """
-    Split images and masks into train, validation, and test sets and copy them to the output directory.
+    Split images and masks into train, validation, and test1 sets and copy them to the output directory.
 
     Arguments:
     image_path: Path to the directory containing images.
@@ -81,8 +81,8 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123):
             shutil.copy(os.path.join(image_path, image_file), os.path.join(val_dir, "images", image_file))
             shutil.copy(os.path.join(mask_path, mask_file), os.path.join(val_dir, "masks", mask_file))
 
-        # Copy test data to respective fold directories
-        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test')
+        # Copy test1 data to respective fold directories
+        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test1')
         if os.path.exists(test_dir):
             shutil.rmtree(test_dir)
         os.makedirs(os.path.join(test_dir, "images"), exist_ok=True)

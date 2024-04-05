@@ -377,7 +377,7 @@ class KFoldDataframeMulticlass(Dataset):
 class KFoldDataframeMulticlassProcessor_v2(Dataset):
     """Image (semantic) segmentation dataset."""
 
-    def __init__(self, data_path, df_path, df=None, idxs=None, transform=None,
+    def __init__(self, data_path, df_path=None, df=None, from_folder = False, idxs=None, transform=None,
                  test=False, normalize_imagenet=False,
                  cropped=True, from_full_to_crop=False, processor=None):
         """
@@ -397,8 +397,9 @@ class KFoldDataframeMulticlassProcessor_v2(Dataset):
         self.cropped = cropped
         self.from_full_to_crop = from_full_to_crop
         self.processor = processor
+        self.from_folder = from_folder
 
-        if self.df is None:
+        if self.df is None and self.from_folder is False:
             if self.cropped:
                 self.df_names = pd.read_csv(os.path.join(self.df_path, "cropped_filenames.csv"))
                 self.images_file_names = self.df_names['images']
@@ -418,9 +419,17 @@ class KFoldDataframeMulticlassProcessor_v2(Dataset):
                     self.images_file_names = self.df_names['images']
                     self.masks_file_names = self.df_names['masks']
 
-        else:
+        elif self.df is None and self.from_folder:
+            self.images_file_names = os.listdir(self.images_dir)
+            self.masks_file_names = os.listdir(self.masks_dir)
+
+
+        elif self.df is not None:
             self.images_file_names = self.df['images']
             self.masks_file_names = self.df['masks']
+
+        else:
+            raise NotImplementedError('invalid option')
 
 
         if self.indices != None:

@@ -18,11 +18,21 @@ cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_images_path = os.path.join(root,'data/cropped_data/images')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
 
+
 cropped_tot_bkg_images_path = os.path.join(root,'data/cropped_data', 'tot_bkg/images')
 
 data_images_path = os.path.join(root,'data/images')
 data_labels_path = os.path.join(root,'data/labels')
 data_masks_path = os.path.join(root,'data/masks')
+
+test_1_data_path = os.path.join(root,'data/test_1/')
+test_1_data_images_path = os.path.join(root,'data/test_1/images')
+test_1_data_masks_path = os.path.join(root,'data/test_1/masks')
+test_1_data_renamed_masks_path = os.path.join(root,'data/test_1/renamed_masks')
+cropped_test_1_data_path = os.path.join(root,'data/test_1/cropped_data')
+cropped_test_1_images_path = os.path.join(root,'data/test_1/cropped_data/images')
+cropped_test_1_masks_path = os.path.join(root,'data/test_1/cropped_data/masks')
+
 multiclass_masks_path = os.path.join(root,'data/masks_classes')
 data_masks_comparison_path = os.path.join(root,'data/masks_comparison')
 renamed_masks_path = os.path.join(root,'data/renamed_masks')
@@ -79,7 +89,7 @@ raw_test_masks_path = os.path.join(root,'data/test/raw_masks')
 to_rename_test_masks_path = os.path.join(root,'data/test/segmented_task_masks')
 
 
-# Cropped test
+# Cropped test1
 cropped_test_data_path = os.path.join(root, 'data/test/cropped_data')
 cropped_test_renamed_masks_path = os.path.join(root, 'data/test/cropped_data/renamed_masks')
 

@@ -21,8 +21,11 @@ def add_segm_predictions(dataset, normalize=True):
 
 def main(args):
 
-    data_path = cropped_test_images_path
-    labels_path = cropped_test_renamed_masks_path
+    #data_path = cropped_test_images_path
+    #labels_path = cropped_test_renamed_masks_path
+
+    data_path = test_1_data_images_path
+    labels_path = test_1_data_renamed_masks_path
 
     # Create the dataset
     dataset = fo.Dataset.from_dir(
@@ -57,11 +60,11 @@ def main(args):
     print("Recall range: (%f, %f)" % dataset.bounds("eval_simple_recall"))
     '''
 
-    results = dataset.evaluate_segmentations(
-        "predictions",
-        gt_field="ground_truth",
-        eval_key="eval_simple",
-    )
+    #results = dataset.evaluate_segmentations(
+    #    "predictions",
+    #    gt_field="ground_truth",
+    #    eval_key="eval_simple",
+    #)
 
     # Print a classification report
     #results.print_report()
@@ -72,7 +75,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--prediction_filepaths", default='./model_results/deeplab/test_deeplab/results', help="Path to the input image") #yolov8s-p2, rtdetr-l
+    parser.add_argument("--prediction_filepaths", default='./model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_1/segformer_processor_decoder_w_1_3_2_2024_03_22_09_36_51/test1/merged_model_results/', help="Path to the input image") #yolov8s-p2, rtdetr-l
 
     args = parser.parse_args()
     main(args)

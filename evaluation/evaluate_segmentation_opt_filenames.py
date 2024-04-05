@@ -22,7 +22,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 def main(data_path, model_path, ths_num=0, normalize_imagenet=0
-         , df_path=k_fold_data_path, split='test', save_into_common_folder=False
+         , df_path=k_fold_data_path, split='test1', save_into_common_folder=False
          ,save_into_model_folder=False):
 
     #save_path = os.path.join(Path(model_path).parent.parent.parent.as_posix(), f'fold_{fold}'
@@ -55,7 +55,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
             metrics_path = os.path.join(save_path, metrics_split)
             split_suffix = 'val'
 
-    elif 'test' in split:
+    elif 'test1' in split:
         if "tot_bkg" in data_path:
             metrics_split = 'tot_bkg_metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
@@ -63,7 +63,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
         else:
             metrics_split = 'metrics_test'
             metrics_path = os.path.join(save_path, metrics_split)
-            split_suffix = 'test'
+            split_suffix = 'test1'
 
     if not os.path.exists(os.path.join(save_path, metrics_split)):
         os.makedirs(metrics_path)
@@ -112,7 +112,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                 save_into_common_path = os.path.join(common_path_train_results, f"model_results_{th}")
             elif split == 'val':
                 save_into_common_path = os.path.join(common_path_val_results, f"model_results_{th}")
-            elif split == 'test':
+            elif split == 'test1':
                 save_into_common_path = os.path.join(common_path_test_results, f"model_results_{th}")
             else:
                 raise NotImplementedError
@@ -128,7 +128,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                 save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
             elif split == 'val':
                 save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
-            elif split == 'test':
+            elif split == 'test1':
                 save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
             else:
                 raise NotImplementedError
@@ -169,7 +169,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                         save_into_common_path = os.path.join(common_path_train_results, f"model_results_{th}")
                     elif split == 'val':
                         save_into_common_path = os.path.join(common_path_val_results, f"model_results_{th}")
-                    elif split == 'test':
+                    elif split == 'test1':
                         save_into_common_path = os.path.join(common_path_test_results, f"model_results_{th}")
                     cv2.imwrite(os.path.join(save_into_common_path, f"{name}"), np.squeeze(pred))
                 if save_into_model_folder:
@@ -177,7 +177,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                         save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
                     elif split == 'val':
                         save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
-                    elif split == 'test':
+                    elif split == 'test1':
                         save_into_model_path = os.path.join(save_path, f"{split}/model_results_{th}")
                     cv2.imwrite(os.path.join(save_into_model_path, f"{name}"), np.squeeze(pred))
 
@@ -205,7 +205,7 @@ if __name__ == '__main__':
                         , help="Path to the input model")
     #parser.add_argument("--fold", default=7
     #                    , help="Path to the input model")
-    parser.add_argument("--split", default="test"
+    parser.add_argument("--split", default="test1"
                         , help="Path to the input model")
     parser.add_argument("--remove_small_objs_size", default=100, help="")
     parser.add_argument("--save_into_common_folder", default=1
