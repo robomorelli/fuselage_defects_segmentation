@@ -6,7 +6,7 @@ from config import *
 
 def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     """
-    Split images and masks into train, validation, and test sets and copy them to the output directory.
+    Split images and masks into train, validation, and test1 sets and copy them to the output directory.
 
     Arguments:
     image_path: Path to the directory containing images.
@@ -25,7 +25,7 @@ def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     # Create output directories
     train_dir = os.path.join(data_path, 'train')
     val_dir = os.path.join(data_path, 'val')
-    test_dir = os.path.join(data_path, 'test')
+    test_dir = os.path.join(data_path, 'test1')
     for directory in [train_dir, val_dir, test_dir]:
         if os.path.exists(directory):
             shutil.rmtree(directory)

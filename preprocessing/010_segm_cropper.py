@@ -26,6 +26,9 @@ def has_positive_pixel(mask_path):
 
 def crop_images(args):
 
+    num_classes = len(os.listdir(full_size_masks_classes_path))
+    print('multiclass for n classes', num_classes)
+
     # Example usage
     images_input_folder = args.images_path
     masks_input_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'masks')
@@ -107,29 +110,32 @@ def crop_images(args):
 
                         if np.sum(np.array(cropped_msk)) > 1:
                             # Save the cropped image to the output folder
-                            #print(np.unique(cropped_msk), msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
-                            #plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
-                            #           np.array(cropped_msk, dtype='uint8'), cmap='gray')
-                            #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
-                            #cropped_msk.save(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)))
                             cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
                             cropped_msk = np.array(cropped_msk)
+                            if cropped_msk.max() > num_classes:
+                                print('before',np.unique(cropped_msk))
+                                for i in range(num_classes):
+                                    cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
+                                print('after', np.unique(cropped_msk))
                             cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
                                         np.squeeze(cropped_msk))
-                            cropped_msk = (np.array(cropped_msk)/2.)*255
+                            print(np.unique(cropped_msk))
+                            cropped_msk = (np.array(cropped_msk)/num_classes)*255
                             cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
                                         np.squeeze(cropped_msk))
 
                         else:
                             if random.random() >= 1 - save_bkg_perc:
-                                #plt.imsave(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                #           np.array(cropped_msk, dtype='uint8'), cmap='gray')
                                 cropped_msk = np.array(cropped_msk)
+                                if cropped_msk.max() > num_classes:
+                                    print('before', np.unique(cropped_msk))
+                                    for i in range(num_classes):
+                                        cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
+                                    print('after', np.unique(cropped_msk))
                                 cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y))
                                             , np.squeeze(np.array(cropped_msk)))
-                                #plt.imsave(img_output_path.replace('.', '_{}_{}.'.format(x, y)), np.array(cropped_img))
                                 cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
-                                cropped_msk = (np.array(cropped_msk) / 2.)*255
+                                cropped_msk = (np.array(cropped_msk) / num_classes)*255
                                 cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
                                             np.squeeze(cropped_msk))
 if __name__ == "__main__":

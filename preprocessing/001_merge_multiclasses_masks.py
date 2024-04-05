@@ -28,7 +28,7 @@ def main(args):
     step = 55
     min_value = 255 - (step*num_classes)
     viz_palette = [x for x in range(255, min_value-1, -step)]
-
+    viz_palette.reverse()
 
     #mapping_dict_viz = {f: int(255 / (i + 1)) for i, f in enumerate(folds)}
     mapping_dict_viz = {f: viz_palette[i] for i, f in enumerate(folds)}
@@ -36,7 +36,7 @@ def main(args):
         yaml.dump(mapping_dict_viz, f)
 
     folds_masks_names = []
-    exclude_labels = args.esxclude_labels
+    exclude_labels = args.exclude_labels
     folds = [f for f in folds if f not in exclude_labels]
     for f in folds:
         folds_masks_names.append(os.listdir(os.path.join(input_folder, f)))
@@ -79,9 +79,13 @@ def main(args):
             # load the image
             img_file = os.path.join(input_folder, f, png_file)
             image = cv2.imread(img_file)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)[:,:,0:1]
             threshold = 100
+            #The masks are loaded from the their own fold (graffio fold, mark fold) and have value 0 or 1
+            # The masks are loaded from the their own fold (graffio fold, mark fold) and have value 0 or 1
+            # The masks are loaded from the their own fold (graffio fold, mark fold) and have value 0 or 1
             image = np.where(image > threshold, 1, 0)
+
             if image.shape[0] != IMG_HEIGHT or image.shape[1] != IMG_WIDTH:
                 print('shape mismatch')
                 if np.sum(image) == 0:
@@ -109,7 +113,6 @@ def main(args):
                     img_minuend = img_minuend - result
 
                 masks_collector[label_min] = img_minuend
-
 
         if mask_type == 'channel-wise':
             mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, num_classes), dtype=int)
@@ -166,8 +169,8 @@ if __name__ == '__main__':
     parser.add_argument("--type", default='pixel-wise', help="[channel-wise, pixel-wise]")
     parser.add_argument("--mapping_dict", default={}, help="Path to the input image")
     parser.add_argument('--priority_list', nargs='+', default=['0', 'Mark', 'Graffio'], help='List of items')
-    parser.add_argument('--esxclude_labels', nargs='+', default=['Graffio'], help='List of items')
-    parser.add_argument("--start_from_scratch", type=int, default=0, help="remove all the filtered_images into save_path dir")
+    parser.add_argument('--exclude_labels', nargs='+', default=[], help='List of items')
+    parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
 
     args = parser.parse_args()
     main(args)

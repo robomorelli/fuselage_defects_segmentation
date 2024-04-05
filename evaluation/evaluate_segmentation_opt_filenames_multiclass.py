@@ -12,7 +12,7 @@ import pandas as pd
 from pathlib import Path
 from torch.utils.data import DataLoader
 from config import *
-from evaluation.utils import F1Score, compute_metrics_th, compute_metrics_multiclass, compute_iou_multiclass
+from evaluation.utils import F1Score, compute_metrics_th, compute_metrics_multiclass, compute_iou_multiclass, F1Score_multiclass
 from tqdm import tqdm
 import cv2
 import yaml
@@ -24,7 +24,7 @@ AVAIL_GPUS = min(1, torch.cuda.device_count())
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def main(data_path, model_path, ths_num=0, normalize_imagenet=0
+def main(data_path, model_path, ths_num=0, unique_th=0.4
          , df_path=k_fold_data_path, split='test', save_into_common_folder=False
          ,save_into_model_folder=False, multi_ths=0, reduce_labels=1, ignore_index=255
          , f1_metrics=0, iou_metrics=1):
@@ -73,6 +73,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
         os.makedirs(metrics_path)
 
     num_classes = len(os.listdir(full_size_masks_classes_path))
+    class_names = os.listdir(full_size_masks_classes_path)
     print('multiclass for n classes', num_classes)
 
     if 'model.' in model_path:
@@ -135,12 +136,18 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
 
     if ths_num > 0 and multi_ths:
         ths = np.linspace(0.2, 0.95, ths_num)
+    elif unique_th > 0:
+        ths = [args.unique_th]
     else:
         ths = [0.5]
 
     if f1_metrics:
-        metrics_dicts = {f"{th}": pd.DataFrame(None, columns=["TP", "FP", "FN", "target objects"]) for th in ths}
-        global_metrics = pd.DataFrame(None, columns=["F1", "TP", "FP", "FN", "accuracy", "precision", "recall", "loss"])
+        metrics_name = ["TP", "FP", "FN"]
+        global_metrics_name = ["F1", "TP", "FP", "FN", "accuracy", "precision", "recall"]
+        columns = [name1 +'_'+ name2 for name1 in class_names for name2 in metrics_name]
+        global_columns = [name1 + '_' + name2 for name1 in class_names for name2 in global_metrics_name ]
+        metrics_dicts = {f"{th}": pd.DataFrame(None, columns=columns) for th in ths}
+        global_metrics = pd.DataFrame(None, columns=global_columns)
     elif iou_metrics:
         columns = [f'class_{ix+1}_iou' for ix in range(num_classes)]
         columns = columns + [f'class_{ix+1}_accuracy' for ix in range(num_classes)]
@@ -207,7 +214,6 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                 os.makedirs(save_into_model_path_viz)
 
 
-
     with torch.no_grad():
         running_loss = 0.0
         for i, (im, gt_mask) in tqdm(enumerate(dataloader), total=len(dataset)):
@@ -239,7 +245,7 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
             mean_loss = running_loss / (i + 1)
             print('loss', mean_loss)
 
-            if not multi_ths:
+            if iou_metrics:
                 results, pred = compute_iou_multiclass(gt_mask, pred_mask, img_name=gt_fh, obj_size=args.remove_small_objs_size
                                                  , reduce_labels=reduce_labels, ignore_index=ignore_index)
 
@@ -248,14 +254,13 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                 for i, k in enumerate(list(results_dict_accuracy.keys())):
                     results_dict_accuracy[f'class_{i+1}_accuracy'].append(results['per_category_iou'][i])
 
-
             else:
-
                 for th in ths:
                     metrics = metrics_dicts[str(th)]
-                    metrics_dicts[th], pred = compute_metrics_th(gt_mask, pred_mask,
-                                                           img_name=gt_fh, metrics=metrics,
-                                                           th=th, obj_size=args.remove_small_objs_size, return_pred_th=True)
+                    metrics_dicts[str(th)], pred = compute_metrics_multiclass(gt_mask, pred_mask,   metrics=metrics, img_name=gt_fh, th=th,
+                                                          n_classes=num_classes, obj_size=args.remove_small_objs_size,
+                                                           return_pred_th = True, id_labels_dict=id2label)
+
 
             if save_into_common_folder:
                 if split == 'train':
@@ -278,38 +283,38 @@ def main(data_path, model_path, ths_num=0, normalize_imagenet=0
                 pred =  (np.array(pred) / num_classes) * 255
                 cv2.imwrite(os.path.join(save_into_model_path_viz, f"{name}"), np.squeeze(pred))
 
-            if multi_ths:
-                if f1_metrics:
-                    for th in ths:
-                        metrics = metrics_dicts[str(th)]
-                        outname = os.path.join(metrics_path, f'{split_suffix }_metrics_{th}.csv')
-                        metrics.to_csv(outname, index=True)
-                        global_metrics.loc[th] = F1Score(metrics, mean_loss)  # possible to itera on different threshold
+        if f1_metrics:
+            for th in ths:
+                metrics = metrics_dicts[str(th)]
+                outname = os.path.join(metrics_path, f'{split_suffix }_metrics_{th}.csv')
+                metrics.to_csv(outname, index=True)
+                global_metrics.loc[th] = F1Score_multiclass(metrics, mean_loss, class_names, global_columns)  # possible to itera on different threshold
 
 
-    if multi_ths:
+    if f1_metrics:
         outname = os.path.join(save_path, f'{split_suffix}_global_metrics.csv')
         global_metrics.to_csv(outname, index=True, index_label='Threshold')
 
-    else:
-        if not f1_metrics:
-            global_values = []
-            for k in list(results_dict_iou.keys()):
-                results_dict_iou[k] = [x for x in results_dict_iou[k] if not (np.isnan(x) or x == 0)]
-                results_dict_summary_iou[k] = np.mean(results_dict_iou[k])
-                global_values.append(results_dict_summary_iou[k])
-            for k in list(results_dict_accuracy.keys()):
-                results_dict_accuracy[k] = [x for x in results_dict_accuracy[k] if not (np.isnan(x) or x == 0)]
-                results_dict_summary_accuracy[k] = np.mean(results_dict_accuracy[k])
-                global_values.append(results_dict_summary_accuracy[k])
 
-            global_metrics.iloc[0,:] = global_values
+    else:
+        global_values = []
+        for k in list(results_dict_iou.keys()):
+            results_dict_iou[k] = [x for x in results_dict_iou[k] if not (np.isnan(x) or x == 0)]
+            results_dict_summary_iou[k] = np.mean(results_dict_iou[k])
+            global_values.append(results_dict_summary_iou[k])
+        for k in list(results_dict_accuracy.keys()):
+            results_dict_accuracy[k] = [x for x in results_dict_accuracy[k] if not (np.isnan(x) or x == 0)]
+            results_dict_summary_accuracy[k] = np.mean(results_dict_accuracy[k])
+            global_values.append(results_dict_summary_accuracy[k])
+
+        global_metrics.iloc[0,:] = global_values
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95")
-    parser.add_argument("--normalize_imagenet", default=0, help="imagenet normalization")
+    parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95. enable multi_ths args to make effective")
+    parser.add_argument("--multi_ths", default=0, help="")
+    parser.add_argument("--unique_th", default=0.3, help="")
     parser.add_argument("--model_path",
                         default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_1/segformer_processor_decoder_w_1_3_2_2024_03_22_09_36_51/model.pth"
                         , help="Path to the input model")
@@ -317,24 +322,22 @@ if __name__ == '__main__':
                         , help="Path to the input model")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")
-    #parser.add_argument("--fold", default=7
-    #                    , help="Path to the input model")
     parser.add_argument("--split", default="test"
                         , help="Path to the input model")
     parser.add_argument("--remove_small_objs_size", default=100, help="")
     parser.add_argument("--save_into_common_folder", default=0
                         , help="Path to the input model")
-    parser.add_argument("--save_into_model_folder", default=1
+    parser.add_argument("--save_into_model_folder", default=0
                         , help="Path to the input model")
-    parser.add_argument("--multi_ths", default=0, help="")
+
     parser.add_argument("--reduce_labels", default=0
                         , help="Path to the input model")
     parser.add_argument("--ignore_index", default=255, help="")
-    parser.add_argument("--f1_metrics", default=0, help="")
-    parser.add_argument("--iou_metrics", default=1, help="")
+    parser.add_argument("--f1_metrics", default=1, help="")
+    parser.add_argument("--iou_metrics", default=0, help="")
 
     args = parser.parse_args()
-    main(data_path=args.data_path, model_path=args.model_path, ths_num=args.ths_num
+    main(data_path=args.data_path, model_path=args.model_path, ths_num=args.ths_num, unique_th=args.unique_th
          , df_path=args.df_path, split=args.split, save_into_common_folder=args.save_into_common_folder,
          save_into_model_folder = args.save_into_model_folder, multi_ths=args.multi_ths,
          reduce_labels=args.reduce_labels, ignore_index=args.ignore_index
