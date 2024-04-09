@@ -4,8 +4,7 @@ import numpy as np
 import cv2
 import argparse
 from pathlib import Path
-import pandas as pd
-from scipy.ndimage import binary_dilation, generate_binary_structure
+from skimage.morphology import remove_small_holes, remove_small_objects
 from config import *
 
 
@@ -104,15 +103,30 @@ def main(args):
             gt = cv2.imread(os.path.join(full_size_masks_path, f"{basename.lstrip('cropped_')}.png".replace('.','_mask.')))
             gt = cv2.cvtColor(gt, cv2.COLOR_BGR2RGB)[:,:,0:1]
 
+            pred = np.zeros_like(image)
+            for class_value in id_classes:
+                if class_value == 1:
+                    size = 200
+                else:
+                    size = 300
+                pred_temp_0 = (image == class_value).astype(bool).copy()
+                pred_temp = remove_small_objects(pred_temp_0.astype(bool), min_size=size, connectivity=1).astype(np.int8)
+                pred_temp = pred_temp * class_value
+                pred = pred + pred_temp
+
             for class_value in id_classes:
                 # Create a mask for the current class value
-                class_mask = np.uint8(image == class_value)
+                class_mask = np.uint8(pred == class_value).astype(np.int8)
+
+                #class_mask = remove_small_objects(np.squeeze(class_mask), min_size=18000, connectivity=1).astype(np.int8)
+                class_mask = np.uint8(class_mask)
+
                 # Perform dilation
-                class_mask= cv2.dilate(class_mask, kernel, iterations=1)
+                class_mask = cv2.dilate(class_mask, kernel, iterations=0)
 
                 class_gt = np.uint8(gt == class_value)
                 # Perform dilation
-                class_gt = cv2.dilate(class_gt, kernel, iterations=2)
+                class_gt = cv2.dilate(class_gt, kernel, iterations=0)
 
                 # Find contours
                 contours, _ = cv2.findContours(class_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -124,20 +138,22 @@ def main(args):
                 color = (0, 128, 0) if class_value == 1 else (255, 255, 0)
                 cv2.drawContours(img, contours_mask, -1, color, thickness=2)
                 legend = np.zeros((150, IMG_WIDTH, 3), dtype=np.uint8)
-                cv2.putText(legend, 'Mark: Green', (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (0, 255, 0), 4)
-                cv2.putText(legend, 'Graffio : Blu', (10, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (255, 0, 0), 4)
-                cv2.putText(legend, 'Mark_gt: Olive', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (0, 128, 0), 4)
-                cv2.putText(legend, 'Graffio_gt : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                            2, (255, 255, 0), 4)
+
+            cv2.putText(legend, 'Mark_pred: Green', (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                        2, (0, 255, 0), 4)
+            cv2.putText(legend, 'Graffio_pred : Blu', (10, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                        2, (255, 0, 0), 4)
+            cv2.putText(legend, 'Mark_gt: Olive', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                        2, (0, 128, 0), 4)
+            cv2.putText(legend, 'Graffio_gt : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                        2, (255, 255, 0), 4)
                 #text_positions = [(10, i * 20 + 60) for i in range(len(classes_name))]  # Calculate text positions
                 #[img := cv2.putText(legend, f'{classes_name[i]}', text_pos, cv2.FONT_HERSHEY_SIMPLEX, 2, color,
                 #                           4) for i, (text_pos, color) in enumerate(zip(text_positions, colors))]
 
-                combined_image = np.vstack((img, legend))
-            cv2
+            combined_image = np.vstack((img, legend))
+
+            #combined_image = cv2.cvtColor(combined_image, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(output_folder_contours, f"{basename.lstrip('cropped_')}.png"), combined_image)
 
 
@@ -152,9 +168,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     #parser.add_argument("--crops_path", default=os.path.join(common_path_test_results, f"model_results_{0.45}"), help="")
-    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_1/segformer_processor_decoder_w_1_3_2_2024_03_22_09_36_51/test/model_results_0.3",
+    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/original_test/model_results",
                         help="")
-    parser.add_argument("--full_size_images_path", default=data_images_path,
+    parser.add_argument("--full_size_images_path", default=test_original_images_path,
                         help="")
     #parser.add_argument("--use_df_filename", default=1,
     #                    help="")

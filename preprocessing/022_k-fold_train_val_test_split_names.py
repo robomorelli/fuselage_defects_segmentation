@@ -72,6 +72,11 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
         val_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in val_index for crop_fh in
                      cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
 
+
+        #test_data = [(crop_fh.replace('_mask.', '.'), crop_fh) for crop_fh in fh]
+
+
+
         val_data_full_images = [data[idx] for idx in val_index]
         train_data_full_images = [data[idx] for idx in train_index]
         test_data_full_images = [data[idx] for idx in test_index]
@@ -131,7 +136,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
         test_filenames = pd.DataFrame(test_dict)
         test_filenames.to_csv(os.path.join(test_dir, f'cropped_filenames.csv'), index=False)
         test_full_images_filenames = pd.DataFrame(test_dict_full_images)
-        test_full_images_filenames .to_csv(os.path.join(test_dir, f'full_size_filenames.csv'), index=False)
+        test_full_images_filenames.to_csv(os.path.join(test_dir, f'full_size_filenames.csv'), index=False)
         #os.makedirs(os.path.join(test_dir, "images"), exist_ok=True)
         #os.makedirs(os.path.join(test_dir, "masks"), exist_ok=True)
         #test_images_filenames = pd.DataFrame(test_dict["images"])
