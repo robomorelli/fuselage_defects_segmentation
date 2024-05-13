@@ -337,15 +337,15 @@ if __name__ == '__main__':
     parser.add_argument("--load_predictions", default=1
                         , help="Path to the input model")
     parser.add_argument("--predictions_folder",
-                        default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/original_test/merged_model_results/"
+                        default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/test_1/merged_model_results/"
                         , help="Path to the input model")
-    parser.add_argument("--data_path", default=test_original_data_path   #cropped_tot_bkg_data_path
+    parser.add_argument("--data_path", default=test_1_data_path   #cropped_tot_bkg_data_path
                         , help="Path to the input model")
-    parser.add_argument("--from_full_to_crop", default=0  #1
+    parser.add_argument("--from_full_to_crop", default=0   #1
                         , help="Path to the input model")
     parser.add_argument("--cropped", default=0   #0
                         , help="Path to the input model")
-    parser.add_argument("--df_path", default=test_original_data_path
+    parser.add_argument("--df_path", default=test_1_data_path
                         , help="the folder containing the dataframe with full size images and masks name"
                                "you should add also the split (see below) suffix to this path")
     parser.add_argument("--split", default="test"
@@ -353,7 +353,7 @@ if __name__ == '__main__':
     parser.add_argument("--remove_small_objs_size", default=100, help="")
     parser.add_argument("--save_into_common_folder", default=0
                         , help="Path to the input model")
-    parser.add_argument("--save_into_model_folder", default=0
+    parser.add_argument("--save_into_model_folder", default=1
                         , help="Path to the input model")
 
     parser.add_argument("--reduce_labels", default=1

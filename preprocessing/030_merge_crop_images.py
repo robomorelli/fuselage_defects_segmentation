@@ -84,15 +84,49 @@ def main(args):
 
         image = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=int)
 
-        for ixs, x_s in enumerate(x_splits[:-1]):
-            for iys, y_s in enumerate(y_splits[:-1]):
-                if mask:
-                    crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}_mask.png"))
-                else:
-                    crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}.png"))
-                crop = cv2.imread(crop_path)
-                crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)[:,:,0:1]
-                image[y_s: y_splits[iys + 1], x_s: x_splits[ixs + 1]] = crop
+        crop_size = y_splits[1] - y_splits[0]
+
+        for ixs, x_s in enumerate(x_splits):
+            for iys, y_s in enumerate(y_splits):
+                if x_s != x_splits[-1] and y_s != y_splits[-1]:
+                    if mask:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}_mask.png"))
+                    else:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}.png"))
+                    crop = cv2.imread(crop_path)
+                    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)[:,:,0:1]
+
+                    image[y_s: y_splits[iys + 1], x_s: x_splits[ixs + 1]] = crop
+
+                elif x_s == x_splits[-1] and y_s != y_splits[-1]:
+                    if mask:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}_mask.png"))
+                    else:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}.png"))
+                    crop = cv2.imread(crop_path)
+                    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)[:, :, 0:1]
+
+                    image[y_s: y_splits[iys + 1], -crop_size:] = crop
+
+                elif y_s == y_splits[-1] and x_s != x_splits[-1]:
+                    if mask:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}_mask.png"))
+                    else:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}.png"))
+                    crop = cv2.imread(crop_path)
+                    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)[:, :, 0:1]
+
+                    image[-crop_size:, x_s: x_splits[ixs + 1]] = crop
+                elif y_s == y_splits[-1] and x_s == x_splits[-1]:
+                    if mask:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}_mask.png"))
+                    else:
+                        crop_path = os.path.join(input_folder, (basename + f"_{x_s}" + f"_{y_s}.png"))
+                    crop = cv2.imread(crop_path)
+                    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)[:, :, 0:1]
+
+                    image[-crop_size:, -crop_size:] = crop
+
 
         if args.plot_contours:
 
@@ -108,7 +142,7 @@ def main(args):
                 if class_value == 1:
                     size = 200
                 else:
-                    size = 300
+                    size = args.remove_small_objects
                 pred_temp_0 = (image == class_value).astype(bool).copy()
                 pred_temp = remove_small_objects(pred_temp_0.astype(bool), min_size=size, connectivity=1).astype(np.int8)
                 pred_temp = pred_temp * class_value
@@ -156,21 +190,22 @@ def main(args):
             #combined_image = cv2.cvtColor(combined_image, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(output_folder_contours, f"{basename.lstrip('cropped_')}.png"), combined_image)
 
-
-        cv2.imwrite(os.path.join(output_folder, f"{basename.lstrip('cropped_')}.png"), np.squeeze(image))
+        cv2.imwrite(os.path.join(output_folder, f"{basename.lstrip('cropped_')}.png"), np.squeeze(pred))
         print('before',np.unique(image))
-        image = (np.array(image) / num_classes)*255
-        print('after',np.unique(image))
-        cv2.imwrite(os.path.join(output_folder_viz, f"{basename.lstrip('cropped_')}.png"), np.squeeze(image))
+        pred = (np.array(pred) / num_classes)*255
+        print('after',np.unique(pred))
+        cv2.imwrite(os.path.join(output_folder_viz, f"{basename.lstrip('cropped_')}.png"), np.squeeze(pred))
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     #parser.add_argument("--crops_path", default=os.path.join(common_path_test_results, f"model_results_{0.45}"), help="")
-    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/original_test/model_results",
+    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/test_1/model_results",
                         help="")
-    parser.add_argument("--full_size_images_path", default=test_original_images_path,
+    parser.add_argument("--full_size_images_path", default=test_1_data_images_path,
+                        help="")
+    parser.add_argument("--remove_small_objects", default=250,
                         help="")
     #parser.add_argument("--use_df_filename", default=1,
     #                    help="")

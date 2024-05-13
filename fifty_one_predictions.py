@@ -24,15 +24,14 @@ def main(args):
     #data_path = cropped_test_images_path
     #labels_path = cropped_test_renamed_masks_path
 
-    data_path = test_1_data_images_path
-    labels_path = test_1_data_renamed_masks_path
+    data_path = april_data_images_path
+    labels_path = april_data_renamed_masks_path
 
     # Create the dataset
     dataset = fo.Dataset.from_dir(
         data_path=data_path,
         labels_path=labels_path,
         dataset_type=fo.types.ImageSegmentationDirectory,
-        #mask_path = args.prediction_filepaths
     )
 
     filepaths = dataset.values("filepath")
@@ -75,7 +74,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--prediction_filepaths", default='./model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_1/segformer_processor_decoder_w_1_3_2_2024_03_22_09_36_51/test1/merged_model_results/', help="Path to the input image") #yolov8s-p2, rtdetr-l
+    parser.add_argument("--prediction_filepaths", default='./model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/april/merged_model_results/', help="Path to the input image") #yolov8s-p2, rtdetr-l
 
     args = parser.parse_args()
     main(args)

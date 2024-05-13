@@ -100,10 +100,10 @@ def crop_images(args):
                         if x + crop_size < IMG_WIDTH and y + crop_size < IMG_HEIGHT:
                             cropped_img = img.crop((x, y, x + crop_size, y + crop_size))
                             cropped_msk = msk.crop((x, y, x + crop_size, y + crop_size))
-                        elif x + crop_size > IMG_WIDTH:
+                        elif x + crop_size >= IMG_WIDTH:
                             cropped_img = img.crop((IMG_WIDTH - crop_size, y, IMG_WIDTH, y + crop_size))
                             cropped_msk = msk.crop((IMG_WIDTH - crop_size, y, IMG_WIDTH, y + crop_size))
-                        elif y + crop_size > IMG_HEIGHT:
+                        elif y + crop_size >= IMG_HEIGHT:
                             cropped_img = img.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
                             cropped_msk = msk.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
 
@@ -141,11 +141,11 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
-    parser.add_argument("--images_path", default=test_original_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=april_data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
     parser.add_argument("--step_size", type=int, default=512, help="Step size for the cropping")
     parser.add_argument("--save_bkg_perc", type=int, default=1, help="probability to retain a background image")
-    parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
+    parser.add_argument("--start_from_scratch", type=int, default=0, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()

@@ -100,7 +100,6 @@ def main(data_path, model_path, exp_name=None):
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     model.eval()
-    criterion = torch.nn.CrossEntropyLoss()
     filenames = dataset.images_file_names
 
     save_into_model_path = os.path.join(save_path, f"model_results")
@@ -150,7 +149,7 @@ if __name__ == '__main__':
     parser.add_argument("--model_path",
                         default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/model.pth"
                         , help="Path to the input model")
-    parser.add_argument("--data_path", default=cropped_test_original_data_path
+    parser.add_argument("--data_path", default=cropped_april_data_path
                         , help="Path to the input model")
     #parser.add_argument("--remove_small_objs_size", default=100, help="")
     parser.add_argument("--exp_name", default=None, help="Path to the input model")
