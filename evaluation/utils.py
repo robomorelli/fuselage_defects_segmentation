@@ -251,8 +251,8 @@ def compute_metrics_multiclass(mask, pred, metrics, img_name, th = 0.3,
         ch = pred[id_ch]
         ch_mask = mask[id_ch]
 
-        ch = (ch > th).astype(np.uint8) * 255
-        ch = remove_small_objects(ch, min_size=obj_size, connectivity=1)
+        ch = (ch > th).astype(np.uint8)
+        ch = remove_small_objects(ch.astype(bool), min_size=obj_size, connectivity=1).astype(np.uint8) * 255
 
         pred_label, pred_count = ndimage.label(ch)
         pred_objs = ndimage.find_objects(pred_label)

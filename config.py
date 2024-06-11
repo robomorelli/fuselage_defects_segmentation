@@ -19,7 +19,6 @@ cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_images_path = os.path.join(root,'data/cropped_data/images')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
 
-
 cropped_tot_bkg_images_path = os.path.join(root,'data/cropped_data', 'tot_bkg/images')
 
 data_images_path = os.path.join(root,'data/images')
@@ -33,6 +32,25 @@ test_1_data_renamed_masks_path = os.path.join(root,'data/test_1/renamed_masks')
 cropped_test_1_data_path = os.path.join(root,'data/test_1/cropped_data')
 cropped_test_1_images_path = os.path.join(root,'data/test_1/cropped_data/images')
 cropped_test_1_masks_path = os.path.join(root,'data/test_1/cropped_data/masks')
+
+april_data_path = os.path.join(root,'data/april/')
+april_data_images_path = os.path.join(root,'data/april/images')
+april_data_masks_path = os.path.join(root,'data/april/masks')
+april_data_renamed_masks_path = os.path.join(root,'data/april/renamed_masks')
+cropped_april_data_path = os.path.join(root,'data/april/cropped_data')
+cropped_april_images_path = os.path.join(root,'data/april/cropped_data/images')
+cropped_april_masks_path = os.path.join(root,'data/april/cropped_data/masks')
+april_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/april/merged_model_results')
+test_original_data_path = os.path.join(root,'data/original_test/')
+test_original_images_path = os.path.join(root,'data/original_test/images')
+test_original_masks_path = os.path.join(root,'data/original_test/masks')
+test_original_renamed_masks_path = os.path.join(root,'data/original_test/renamed_masks')
+cropped_test_original_data_path = os.path.join(root,'data/original_test/cropped_data')
+cropped_test_original_images_path = os.path.join(root,'data/original_test/cropped_data/images')
+cropped_test_original_masks_path = os.path.join(root,'data/original_test/cropped_data/masks')
+
+feb_mar_apr_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/feb_mar_apr/merged_model_results')
+
 
 multiclass_masks_path = os.path.join(root,'data/masks_classes')
 data_masks_comparison_path = os.path.join(root,'data/masks_comparison')

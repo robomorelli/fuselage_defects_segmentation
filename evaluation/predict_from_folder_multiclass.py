@@ -24,7 +24,7 @@ AVAIL_GPUS = min(1, torch.cuda.device_count())
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def main(data_path, model_path, exp_name='test1'):
+def main(data_path, model_path, exp_name=None):
 
     num_classes = len(os.listdir(full_size_masks_classes_path))
     print('multiclass for n classes', num_classes)
@@ -34,14 +34,16 @@ def main(data_path, model_path, exp_name='test1'):
         raise Exception
 
     save_path = os.path.join(Path(model_path).parent.as_posix())
-    save_path = os.path.join(save_path, exp_name)
+    if exp_name != None:
+        save_path = os.path.join(save_path, exp_name)
+    else:
+        save_path = os.path.join(save_path, os.path.basename(Path(data_path).parent))
 
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     else:
         shutil.rmtree(save_path)
         os.makedirs(save_path)
-
 
     if 'model.' in model_path:
         checkpoint = torch.load(model_path, map_location=torch.device(device))
@@ -98,7 +100,6 @@ def main(data_path, model_path, exp_name='test1'):
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
     model.eval()
-    criterion = torch.nn.CrossEntropyLoss()
     filenames = dataset.images_file_names
 
     save_into_model_path = os.path.join(save_path, f"model_results")
@@ -148,10 +149,10 @@ if __name__ == '__main__':
     parser.add_argument("--model_path",
                         default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/model.pth"
                         , help="Path to the input model")
-    parser.add_argument("--data_path", default=cropped_test_1_data_path
+    parser.add_argument("--data_path", default=cropped_april_data_path
                         , help="Path to the input model")
-    parser.add_argument("--remove_small_objs_size", default=100, help="")
-    parser.add_argument("--exp_name", default='test1', help="Path to the input model")
+    #parser.add_argument("--remove_small_objs_size", default=100, help="")
+    parser.add_argument("--exp_name", default=None, help="Path to the input model")
     #parser.add_argument("--draw_contour", default=100, help="")
 
     args = parser.parse_args()

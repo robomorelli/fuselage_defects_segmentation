@@ -100,10 +100,10 @@ def crop_images(args):
                         if x + crop_size < IMG_WIDTH and y + crop_size < IMG_HEIGHT:
                             cropped_img = img.crop((x, y, x + crop_size, y + crop_size))
                             cropped_msk = msk.crop((x, y, x + crop_size, y + crop_size))
-                        elif x + crop_size > IMG_WIDTH:
+                        elif x + crop_size >= IMG_WIDTH:
                             cropped_img = img.crop((IMG_WIDTH - crop_size, y, IMG_WIDTH, y + crop_size))
                             cropped_msk = msk.crop((IMG_WIDTH - crop_size, y, IMG_WIDTH, y + crop_size))
-                        elif y + crop_size > IMG_HEIGHT:
+                        elif y + crop_size >= IMG_HEIGHT:
                             cropped_img = img.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
                             cropped_msk = msk.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
 

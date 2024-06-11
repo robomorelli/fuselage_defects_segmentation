@@ -52,7 +52,8 @@ def compute_global_values(results_dict_iou, results_dict_accuracy, mean_loss
 def main(data_path, model_path, ths_num=0, unique_th=0.4
          , df_path=k_fold_data_path, split='test', save_into_common_folder=False
          ,save_into_model_folder=False, multi_ths=0, reduce_labels=1, ignore_index=255
-         , f1_metrics=0, iou_metrics=1):
+         , f1_metrics=0, iou_metrics=1, from_full_to_crop=1,
+         cropped=1, load_predictions=0, predictions_folder=model_results):
 
     if not os.path.exists(model_path):
         print('the model path is not correct')
@@ -150,14 +151,16 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
         processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
 
     transform = None
-    df_path = os.path.join(df_path, f"fold_{fold}", split)
+    if 'k-fold' in df_path:
+        df_path = os.path.join(df_path, f"fold_{fold}", split)
+    else:
+        df_path = os.path.join(df_path, split)
 
     dataset = KFoldDataframeMulticlassProcessor_v2(data_path, df_path=df_path, transform=transform,
-                                                normalize_imagenet=normalize_imagenet, cropped=False,
-                                                from_full_to_crop=True,  processor=processor)
+                                                normalize_imagenet=normalize_imagenet, cropped=cropped,
+                                                from_full_to_crop=from_full_to_crop,  processor=processor)
 
     dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
-
 
     if ths_num > 0 and multi_ths:
         ths = np.linspace(0.2, 0.95, ths_num)
@@ -239,7 +242,8 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
                 os.makedirs(save_into_model_path_viz)
 
 
-    with torch.no_grad():
+    with (torch.no_grad()):
+
         running_loss = 0.0
         for i, (im, gt_mask) in tqdm(enumerate(dataloader), total=len(dataset)):
 
@@ -248,25 +252,40 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
                     gt_mask[gt_mask == np.ceil(255 / (i + 1))] = num_classes - i
 
             name = filenames[i]
-            logits = model(im.to(device)).logits
 
-            upsampled_logits = nn.functional.interpolate(
-                logits,
-                size=tuple(im.shape[-2:]),  # (height, width)
-                mode='bilinear',
-                align_corners=False
-            )
+            if not load_predictions:
+                logits = model(im.to(device)).logits
 
-            loss = criterion(upsampled_logits.float(), gt_mask.to(device).squeeze(1).long()).item()
+                upsampled_logits = nn.functional.interpolate(
+                    logits,
+                    size=tuple(im.shape[-2:]),  # (height, width)
+                    mode='bilinear',
+                    align_corners=False
+                )
 
-            pred_mask = upsampled_logits[0].softmax(0).permute(1, 2, 0).detach().cpu().numpy()
-            pred_mask = np.argmax(pred_mask, 2)
+                loss = criterion(upsampled_logits.float(), gt_mask.to(device).squeeze(1).long()).item()
 
-            gt_fh = dataset.images_file_names[i]
-            gt_mask = gt_mask.detach().cpu().numpy()
-            running_loss += loss
-            mean_loss = running_loss / (i + 1)
-            print('loss', mean_loss)
+                print('mask', np.unique(gt_mask))
+                pred_mask = upsampled_logits[0].softmax(0).permute(1, 2, 0).detach().cpu().numpy()
+                pred_mask = np.argmax(pred_mask, 2)
+                print('pred', np.unique(pred_mask))
+
+                running_loss += loss
+                mean_loss = running_loss / (i + 1)
+                print('loss', mean_loss)
+            else:
+                gt_fh = dataset.images_file_names[i]
+                #gt_mask = gt_mask.detach().cpu().numpy()
+
+                gt_mask = cv2.imread(os.path.join(data_path, 'masks', gt_fh.replace('.','_mask.')))
+
+                gt_mask = np.squeeze(cv2.cvtColor(gt_mask, cv2.COLOR_BGR2RGB)[:,:,0:1])
+                print('mask', np.unique(gt_mask))
+                pred = cv2.imread(os.path.join(predictions_folder, gt_fh))
+                pred_mask = np.squeeze(cv2.cvtColor(pred, cv2.COLOR_BGR2RGB)[:,:,0:1])
+                print('pred', np.unique(pred_mask))
+                mean_loss = None
+
 
             if iou_metrics:
                 results, pred = compute_iou_multiclass(gt_mask, pred_mask, img_name=gt_fh, obj_size=args.remove_small_objs_size
@@ -310,12 +329,12 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
                 pred =  (np.array(pred) / num_classes) * 255
                 cv2.imwrite(os.path.join(save_into_model_path_viz, f"{name}"), np.squeeze(pred))
 
-        if f1_metrics:
-            for th in ths:
-                metrics = metrics_dicts[str(th)]
-                outname = os.path.join(metrics_path, f'{split_suffix }_metrics_{th}.csv')
-                metrics.to_csv(outname, index=True)
-                global_metrics.loc[th] = F1Score_multiclass(metrics, mean_loss, class_names, global_columns)  # possible to itera on different threshold
+            if f1_metrics:
+                for th in ths:
+                    metrics = metrics_dicts[str(th)]
+                    outname = os.path.join(metrics_path, f'{split_suffix }_metrics_{th}.csv')
+                    metrics.to_csv(outname, index=True)
+                    global_metrics.loc[th] = F1Score_multiclass(metrics, mean_loss, class_names, global_columns)  # possible to itera on different threshold
 
 
     if f1_metrics:
@@ -345,10 +364,21 @@ if __name__ == '__main__':
     parser.add_argument("--model_path",
                         default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/model.pth"
                         , help="Path to the input model")
+    parser.add_argument("--load_predictions", default=1
+                        , help="Path to the input model")
+    parser.add_argument("--predictions_folder",
+                        default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/test_1/merged_model_results/"
+
+                        , help="Path to the input model")
     parser.add_argument("--data_path", default=cropped_tot_bkg_data_path
                         , help="Path to the input model")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")
+    parser.add_argument("--cropped", default=0   #0
+                        , help="Path to the input model")
+    parser.add_argument("--df_path", default=test_1_data_path
+                        , help="the folder containing the dataframe with full size images and masks name"
+                               "you should add also the split (see below) suffix to this path")
     parser.add_argument("--split", default="test"
                         , help="Path to the input model")
     parser.add_argument("--remove_small_objs_size", default=100, help="")
@@ -357,7 +387,7 @@ if __name__ == '__main__':
     parser.add_argument("--save_into_model_folder", default=1
                         , help="Path to the input model")
 
-    parser.add_argument("--reduce_labels", default=0
+    parser.add_argument("--reduce_labels", default=1
                         , help="Path to the input model")
     parser.add_argument("--ignore_index", default=255, help="")
     parser.add_argument("--f1_metrics", default=1, help="")
@@ -368,6 +398,5 @@ if __name__ == '__main__':
          , df_path=args.df_path, split=args.split, save_into_common_folder=args.save_into_common_folder,
          save_into_model_folder = args.save_into_model_folder, multi_ths=args.multi_ths,
          reduce_labels=args.reduce_labels, ignore_index=args.ignore_index
-         ,f1_metrics=args.f1_metrics, iou_metrics=args.iou_metrics)
-
-
+         ,f1_metrics=args.f1_metrics, iou_metrics=args.iou_metrics, from_full_to_crop=args.from_full_to_crop,
+         cropped=args.cropped, load_predictions=args.load_predictions, predictions_folder=args.predictions_folder)
