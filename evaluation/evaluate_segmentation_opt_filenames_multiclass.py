@@ -23,6 +23,31 @@ from transformers import (SegformerForSemanticSegmentation, SegformerImageProces
 AVAIL_GPUS = min(1, torch.cuda.device_count())
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+def compute_global_values(results_dict_iou, results_dict_accuracy, mean_loss
+                          ,save_path, split_suffix, num_classes):
+    columns = [f'class_{ix + 1}_iou' for ix in range(num_classes)]
+    columns = columns + [f'class_{ix + 1}_accuracy' for ix in range(num_classes)]
+    columns = columns + ["loss"]
+    global_metrics_temp = pd.DataFrame(None, columns=columns)
+
+    global_values = []
+    results_dict_summary_iou = {f'class_{ix + 1}_iou_summary': [] for ix in range(num_classes)}
+    results_dict_summary_accuracy = {f'class_{ix + 1}_accuracy_summary': [] for ix in range(num_classes)}
+    for k in list(results_dict_iou.keys()):
+        results_dict_iou[k] = [x for x in results_dict_iou[k] if not (np.isnan(x) or x == 0)]
+        results_dict_summary_iou[k] = np.mean(results_dict_iou[k])
+        global_values.append(results_dict_summary_iou[k])
+    for k in list(results_dict_accuracy.keys()):
+        results_dict_accuracy[k] = [x for x in results_dict_accuracy[k] if not (np.isnan(x) or x == 0)]
+        results_dict_summary_accuracy[k] = np.mean(results_dict_accuracy[k])
+        global_values.append(results_dict_summary_accuracy[k])
+
+        global_values.append(mean_loss)
+
+        global_metrics_temp = global_metrics_temp.append(pd.Series(global_values, index=global_metrics_temp.columns), ignore_index=True)
+        outname = os.path.join(save_path, f'{split_suffix}_global_metrics_temp.csv')
+        global_metrics_temp.to_csv(outname, index=True, index_label='Threshold')
+
 
 def main(data_path, model_path, ths_num=0, unique_th=0.4
          , df_path=k_fold_data_path, split='test', save_into_common_folder=False
@@ -234,10 +259,8 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
 
             loss = criterion(upsampled_logits.float(), gt_mask.to(device).squeeze(1).long()).item()
 
-            print('mask', np.unique(gt_mask))
             pred_mask = upsampled_logits[0].softmax(0).permute(1, 2, 0).detach().cpu().numpy()
             pred_mask = np.argmax(pred_mask, 2)
-            print('pred', np.unique(pred_mask))
 
             gt_fh = dataset.images_file_names[i]
             gt_mask = gt_mask.detach().cpu().numpy()
@@ -253,6 +276,10 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
                     results_dict_iou[f'class_{i+1}_iou'].append(results['per_category_iou'][i])
                 for i, k in enumerate(list(results_dict_accuracy.keys())):
                     results_dict_accuracy[f'class_{i+1}_accuracy'].append(results['per_category_iou'][i])
+
+                if i%200 == 0 and i != 0:
+                    compute_global_values(global_metrics, results_dict_iou, results_dict_accuracy, mean_loss
+                                    ,save_path, split_suffix, num_classes)
 
             else:
                 for th in ths:
@@ -316,7 +343,7 @@ if __name__ == '__main__':
     parser.add_argument("--multi_ths", default=0, help="")
     parser.add_argument("--unique_th", default=0.3, help="")
     parser.add_argument("--model_path",
-                        default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_1/segformer_processor_decoder_w_1_3_2_2024_03_22_09_36_51/model.pth"
+                        default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/model.pth"
                         , help="Path to the input model")
     parser.add_argument("--data_path", default=cropped_tot_bkg_data_path
                         , help="Path to the input model")
@@ -327,7 +354,7 @@ if __name__ == '__main__':
     parser.add_argument("--remove_small_objs_size", default=100, help="")
     parser.add_argument("--save_into_common_folder", default=0
                         , help="Path to the input model")
-    parser.add_argument("--save_into_model_folder", default=0
+    parser.add_argument("--save_into_model_folder", default=1
                         , help="Path to the input model")
 
     parser.add_argument("--reduce_labels", default=0

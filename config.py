@@ -13,6 +13,7 @@ conf_path = os.path.join(root,'configuration')
 
 # Train data path
 data_path = os.path.join(root,'data')
+masks_viz_path = os.path.join(root,'data/visualization')
 full_size_masks_classes_path = os.path.join(root,'data/masks_classes')
 cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_images_path = os.path.join(root,'data/cropped_data/images')
@@ -88,7 +89,6 @@ test_masks_path = os.path.join(root,'data/test/masks')
 raw_test_masks_path = os.path.join(root,'data/test/raw_masks')
 to_rename_test_masks_path = os.path.join(root,'data/test/segmented_task_masks')
 
-
 # Cropped test1
 cropped_test_data_path = os.path.join(root, 'data/test/cropped_data')
 cropped_test_renamed_masks_path = os.path.join(root, 'data/test/cropped_data/renamed_masks')
@@ -96,6 +96,9 @@ cropped_test_renamed_masks_path = os.path.join(root, 'data/test/cropped_data/ren
 cropped_test_images_path = os.path.join(root, 'data/test/cropped_data/images')
 cropped_test_masks_path = os.path.join(root, 'data/test/cropped_data/masks')
 model_results = os.path.join(root, 'model_results')
+
+masks_to_remap_path = os.path.join(root, 'data/masks_to_remap')
+images_2_wave_path = os.path.join(root, 'data/images_2_wave')
 
 IMG_WIDTH = 4096
 IMG_HEIGHT = 3000

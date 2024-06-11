@@ -128,9 +128,9 @@ def main(args):
                             2, (0, 255, 0), 4)
                 cv2.putText(legend, 'Graffio : Blu', (10, 110), cv2.FONT_HERSHEY_SIMPLEX,
                             2, (255, 0, 0), 4)
-                cv2.putText(legend, 'Mark_gt: Olive', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(legend, 'Mark: Olive', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             2, (0, 128, 0), 4)
-                cv2.putText(legend, 'Graffio_gt : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                cv2.putText(legend, 'Graffio : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
                             2, (255, 255, 0), 4)
                 #text_positions = [(10, i * 20 + 60) for i in range(len(classes_name))]  # Calculate text positions
                 #[img := cv2.putText(legend, f'{classes_name[i]}', text_pos, cv2.FONT_HERSHEY_SIMPLEX, 2, color,
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     #parser.add_argument("--crops_path", default=os.path.join(common_path_test_results, f"model_results_{0.45}"), help="")
-    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_1/segformer_processor_decoder_w_1_3_2_2024_03_22_09_36_51/test/model_results_0.3",
+    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/test/model_results_0.3",
                         help="")
     parser.add_argument("--full_size_images_path", default=data_images_path,
                         help="")
