@@ -75,8 +75,6 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
 
         #test_data = [(crop_fh.replace('_mask.', '.'), crop_fh) for crop_fh in fh]
 
-
-
         val_data_full_images = [data[idx] for idx in val_index]
         train_data_full_images = [data[idx] for idx in train_index]
         test_data_full_images = [data[idx] for idx in test_index]
@@ -128,7 +126,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
         #val_images_filenames.to_csv(os.path.join(val_dir, "images", f'cropped_images_filenames.csv'), index=False)
         #val_masks_filenames.to_csv(os.path.join(val_dir, "masks", f'cropped_masks_filenames.csv'), index=False)
 
-        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test1')
+        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test')
         if os.path.exists(test_dir):
             shutil.rmtree(test_dir)
 

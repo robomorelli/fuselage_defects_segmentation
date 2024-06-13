@@ -145,11 +145,13 @@ if __name__ == "__main__":
     parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction")
     parser.add_argument("--step_size", type=int, default=256, help="Step size for the cropping")
-    parser.add_argument("--save_bkg_perc", type=int, default=0.05, help="probability to retain a background image")
+    parser.add_argument("--save_bkg_perc", type=int, default=0.02, help="probability to retain a background image")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()
+
+    # 512 - 256 step- 0.02- perc bkg
 
     # Call the function with provided arguments
     crop_images(args)
