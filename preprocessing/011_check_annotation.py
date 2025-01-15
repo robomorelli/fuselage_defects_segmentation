@@ -9,10 +9,10 @@ from config import *
 
 
 def main(args):
-    # full_size_images_path = args.full_size_images_path
-    # full_size_masks_path = os.path.join(Path(args.full_size_images_path).parent.as_posix(), 'masks')
-    full_size_images_path = "../data/images_2_wave"
-    full_size_masks_path = "../data/masks_remapped"
+    full_size_images_path = args.full_size_images_path
+    full_size_masks_path = os.path.join(Path(args.full_size_images_path).parent.as_posix(), 'masks')
+    #full_size_images_path = "../data/images_2_wave"
+    #full_size_masks_path = "../data/masks_remapped"
     output_folder_contours = os.path.join(Path(full_size_masks_path).parent.as_posix(), "viz_contours")
 
     num_classes = len(os.listdir(full_size_masks_classes_path))
@@ -32,6 +32,7 @@ def main(args):
     if args.start_from_scratch:
         if os.path.exists(output_folder_contours):
             shutil.rmtree(output_folder_contours)
+            os.makedirs(output_folder_contours, exist_ok=True)
         else:
             os.makedirs(output_folder_contours, exist_ok=True)
     else:
@@ -42,7 +43,6 @@ def main(args):
     for fh in fhs:
 
         try:
-
             img = cv2.imread(os.path.join(full_size_images_path, fh))
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             gt = cv2.imread(os.path.join(full_size_masks_path, fh.replace('.', '_mask.')))
@@ -64,7 +64,10 @@ def main(args):
             combined_image = np.vstack((img, legend))
             cv2.imwrite(os.path.join(output_folder_contours, fh), combined_image)
         except:
-            print(f'probmel with {fh}')
+            img = cv2.imread(os.path.join(full_size_images_path, fh))
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            print(f'black mask {fh}')
+            cv2.imwrite(os.path.join(output_folder_contours, fh), img)
 
 
 if __name__ == '__main__':

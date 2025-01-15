@@ -68,13 +68,19 @@ def main(args):
 
 
 if __name__ == '__main__':
-
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     parser.add_argument("--input_masks_path", default=masks_to_remap_path, help="Path to the input image")
     parser.add_argument("--input_images_path", default=images_2_wave_path, help="Path to the input image")
     parser.add_argument("--multiclass_masks_path", default=multiclass_masks_path, help="Path to the input image")
     parser.add_argument("--move_to_main_folders", default=0, help="")
-
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
+    # RUN ONLY ONCE TO REMAP FROM OTHER DICTIONARY OF SEGFORMER
     parser.add_argument("--remapping_dict", default={'0':1, '1':2, '2':0}, help="Path to the input image")
     args = parser.parse_args()
     main(args)

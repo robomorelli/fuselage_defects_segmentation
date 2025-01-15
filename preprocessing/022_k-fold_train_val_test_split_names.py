@@ -5,6 +5,9 @@ import argparse
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 import pandas as pd
+import sys
+import numpy as np
+sys.path.append('..')
 from pathlib import Path
 from config import *
 
@@ -54,93 +57,100 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
         os.makedirs(split_dir, exist_ok=True)
 
     # Initialize KFold splitter
-    kf = KFold(n_splits=n_splits, shuffle=True, random_state=seed)
     train_dict = {}
     val_dict = {}
     test_dict = {}
     train_dict_full_images = {}
     val_dict_full_images = {}
     test_dict_full_images = {}
-    # Split data using KFold
-    for i, (train_index, test_index) in enumerate(kf.split(data)):
+
+    if args.n_splits == 1 and args.test_from_txt_file is not None:
+
+        with open(args.test_from_txt_file, 'r') as file:
+            lines = file.readlines()
+            lines = [line.strip() for line in lines]
+
+        test_index = []
+        for element in lines:
+            if element in image_files:
+                test_index.append(image_files.index(element))
 
         test_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in test_index for crop_fh in
                      cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
+        all_index = np.arange(len(data))
+        train_index = [i for i in all_index if i not in test_index]
+
         train_index, val_index = train_test_split(train_index, test_size=val_ratio, random_state=seed)
         train_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in train_index for crop_fh in
                      cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
         val_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in val_index for crop_fh in
                      cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
 
+    else:
+        kf = KFold(n_splits=n_splits, shuffle=True, random_state=seed)
+        # Split data using KFold
+        for i, (train_index, test_index) in enumerate(kf.split(data)):
 
-        #test_data = [(crop_fh.replace('_mask.', '.'), crop_fh) for crop_fh in fh]
+            test_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in test_index for crop_fh in
+                         cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
+            train_index, val_index = train_test_split(train_index, test_size=val_ratio, random_state=seed)
+            train_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in train_index for crop_fh in
+                         cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
+            val_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in val_index for crop_fh in
+                         cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
 
-        val_data_full_images = [data[idx] for idx in val_index]
-        train_data_full_images = [data[idx] for idx in train_index]
-        test_data_full_images = [data[idx] for idx in test_index]
+            #test_data = [(crop_fh.replace('_mask.', '.'), crop_fh) for crop_fh in fh]
 
-        train_dict["images"] = [x[0] for x in train_data]
-        train_dict["masks"] = [x[1] for x in train_data]
-        val_dict["images"] = [x[0] for x in val_data]
-        val_dict["masks"] = [x[1] for x in val_data]
-        test_dict["images"] = [x[0] for x in test_data]
-        test_dict["masks"] = [x[1] for x in test_data]
+    val_data_full_images = [data[idx] for idx in val_index]
+    train_data_full_images = [data[idx] for idx in train_index]
+    test_data_full_images = [data[idx] for idx in test_index]
 
-        train_dict_full_images["images"] = [x[0] for x in train_data_full_images]
-        train_dict_full_images["masks"] = [x[1] for x in train_data_full_images]
-        val_dict_full_images["images"] = [x[0] for x in val_data_full_images]
-        val_dict_full_images["masks"] = [x[1] for x in val_data_full_images]
-        test_dict_full_images["images"] = [x[0] for x in test_data_full_images]
-        test_dict_full_images["masks"] = [x[1] for x in test_data_full_images]
+    train_dict["images"] = [x[0] for x in train_data]
+    train_dict["masks"] = [x[1] for x in train_data]
+    val_dict["images"] = [x[0] for x in val_data]
+    val_dict["masks"] = [x[1] for x in val_data]
+    test_dict["images"] = [x[0] for x in test_data]
+    test_dict["masks"] = [x[1] for x in test_data]
 
-        # Copy train data to respective fold directories
-        train_dir = os.path.join(output_dir, f'fold_{i + 1}', 'train')
-        if os.path.exists(train_dir):
-            shutil.rmtree(train_dir)
+    train_dict_full_images["images"] = [x[0] for x in train_data_full_images]
+    train_dict_full_images["masks"] = [x[1] for x in train_data_full_images]
+    val_dict_full_images["images"] = [x[0] for x in val_data_full_images]
+    val_dict_full_images["masks"] = [x[1] for x in val_data_full_images]
+    test_dict_full_images["images"] = [x[0] for x in test_data_full_images]
+    test_dict_full_images["masks"] = [x[1] for x in test_data_full_images]
 
-        os.makedirs(os.path.join(train_dir), exist_ok=True)
-        train_filenames = pd.DataFrame(train_dict)
-        train_filenames.to_csv(os.path.join(train_dir, f'cropped_filenames.csv'), index=False)
-        train_full_images_filenames = pd.DataFrame(train_dict_full_images)
-        train_full_images_filenames .to_csv(os.path.join(train_dir, f'full_size_filenames.csv'), index=False)
-        #os.makedirs(os.path.join(train_dir, "images"), exist_ok=True)
-        #os.makedirs(os.path.join(train_dir, "masks"), exist_ok=True)
-        #train_images_filenames = pd.DataFrame(train_dict["images"])
-        #train_masks_filenames = pd.DataFrame(train_dict["masks"])
-        #train_images_filenames.to_csv(os.path.join(train_dir, "images", f'cropped_images_filenames.csv'), index=False)
-        #train_masks_filenames.to_csv(os.path.join(train_dir, "masks", f'cropped_masks_filenames.csv'), index=False)
+    # Copy train data to respective fold directories
+    train_dir = os.path.join(output_dir, f'fold_{i + 1}', 'train')
+    if os.path.exists(train_dir):
+        shutil.rmtree(train_dir)
 
-        val_dir = os.path.join(output_dir, f'fold_{i + 1}', 'val')
-        if os.path.exists(val_dir):
-            shutil.rmtree(val_dir)
+    os.makedirs(os.path.join(train_dir), exist_ok=True)
+    train_filenames = pd.DataFrame(train_dict)
+    train_filenames.to_csv(os.path.join(train_dir, f'cropped_filenames.csv'), index=False)
+    train_full_images_filenames = pd.DataFrame(train_dict_full_images)
+    train_full_images_filenames .to_csv(os.path.join(train_dir, f'full_size_filenames.csv'), index=False)
 
-        os.makedirs(os.path.join(val_dir), exist_ok=True)
-        val_filenames = pd.DataFrame(val_dict)
-        val_filenames.to_csv(os.path.join(val_dir, f'cropped_filenames.csv'), index=False)
-        val_full_images_filenames = pd.DataFrame(val_dict_full_images)
-        val_full_images_filenames .to_csv(os.path.join(val_dir, f'full_size_filenames.csv'), index=False)
-        #os.makedirs(os.path.join(val_dir, "images"), exist_ok=True)
-        #os.makedirs(os.path.join(val_dir, "masks"), exist_ok=True)
-        #val_images_filenames = pd.DataFrame(val_dict["images"])
-        #val_masks_filenames = pd.DataFrame(val_dict["masks"])
-        #val_images_filenames.to_csv(os.path.join(val_dir, "images", f'cropped_images_filenames.csv'), index=False)
-        #val_masks_filenames.to_csv(os.path.join(val_dir, "masks", f'cropped_masks_filenames.csv'), index=False)
+    val_dir = os.path.join(output_dir, f'fold_{i + 1}', 'val')
+    if os.path.exists(val_dir):
+        shutil.rmtree(val_dir)
 
-        test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test')
-        if os.path.exists(test_dir):
-            shutil.rmtree(test_dir)
+    os.makedirs(os.path.join(val_dir), exist_ok=True)
+    val_filenames = pd.DataFrame(val_dict)
+    val_filenames.to_csv(os.path.join(val_dir, f'cropped_filenames.csv'), index=False)
+    val_full_images_filenames = pd.DataFrame(val_dict_full_images)
+    val_full_images_filenames .to_csv(os.path.join(val_dir, f'full_size_filenames.csv'), index=False)
 
-        os.makedirs(os.path.join(test_dir), exist_ok=True)
-        test_filenames = pd.DataFrame(test_dict)
-        test_filenames.to_csv(os.path.join(test_dir, f'cropped_filenames.csv'), index=False)
-        test_full_images_filenames = pd.DataFrame(test_dict_full_images)
-        test_full_images_filenames.to_csv(os.path.join(test_dir, f'full_size_filenames.csv'), index=False)
-        #os.makedirs(os.path.join(test_dir, "images"), exist_ok=True)
-        #os.makedirs(os.path.join(test_dir, "masks"), exist_ok=True)
-        #test_images_filenames = pd.DataFrame(test_dict["images"])
-        #test_masks_filenames = pd.DataFrame(test_dict["masks"])
-        #test_images_filenames.to_csv(os.path.join(test_dir, "images", f'cropped_images_filenames.csv'), index=False)
-        #test_masks_filenames.to_csv(os.path.join(test_dir, "masks", f'cropped_masks_filenames.csv'), index=False)
+
+    test_dir = os.path.join(output_dir, f'fold_{i + 1}', 'test')
+    if os.path.exists(test_dir):
+        shutil.rmtree(test_dir)
+
+    os.makedirs(os.path.join(test_dir), exist_ok=True)
+    test_filenames = pd.DataFrame(test_dict)
+    test_filenames.to_csv(os.path.join(test_dir, f'cropped_filenames.csv'), index=False)
+    test_full_images_filenames = pd.DataFrame(test_dict_full_images)
+    test_full_images_filenames.to_csv(os.path.join(test_dir, f'full_size_filenames.csv'), index=False)
+
 
 
 if __name__ == "__main__":
@@ -148,10 +158,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
     parser.add_argument("--data_path", default=data_path, help="Path to the input image")
-    parser.add_argument("--n_splits", type=int, default=9, help="Patch size for extraction")
+    parser.add_argument("--n_splits", type=int, default=1, help="Patch size for extraction")
     parser.add_argument("--val_ratio", type=int, default=0.15, help="Patch size for extraction")
     parser.add_argument("--seed", type=int, default=123, help="Patch size for extraction")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="Patch size for extraction")
+    parser.add_argument("--test_from_txt_file", default='../data/test_images.txt', help="Patch size for extraction")
     args = parser.parse_args()
 
     main(args.data_path, args.n_splits, args.val_ratio, args.seed, args.start_from_scratch)

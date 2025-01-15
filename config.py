@@ -24,6 +24,7 @@ cropped_tot_bkg_images_path = os.path.join(root,'data/cropped_data', 'tot_bkg/im
 data_images_path = os.path.join(root,'data/images')
 data_labels_path = os.path.join(root,'data/labels')
 data_masks_path = os.path.join(root,'data/masks')
+data_masks_npy_path = os.path.join(root,'data/masks_npy')
 
 test_1_data_path = os.path.join(root,'data/test_1/')
 test_1_data_images_path = os.path.join(root,'data/test_1/images')
