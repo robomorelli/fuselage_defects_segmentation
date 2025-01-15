@@ -67,7 +67,7 @@ def main(args):
     cfg.dataset.fold = args.fold
 
     model_dir = os.path.join(model_results, args.config_name, cfg.model.encoder_name, f"fold_{args.fold}"
-                             , cfg.model.exp_name + "_" + now)
+                             , cfg.model.exp_name + f'_w_{cfg.opt.weight[0]}_{cfg.opt.weight[1]}_{cfg.opt.weight[2]}'+ "_" + now)
 
     if "cropped" in data_path:
         print(' cropped data will be used')
@@ -262,7 +262,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='segformer_k_fold_multiclass', help="Path to the input image")
+    parser.add_argument("--config_name", default='segformer_k_fold_multiclass_wave_2', help="Path to the input image")
     parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()

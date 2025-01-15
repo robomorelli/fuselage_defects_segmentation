@@ -273,6 +273,13 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
                 running_loss += loss
                 mean_loss = running_loss / (i + 1)
                 print('loss', mean_loss)
+                gt_fh = dataset.images_file_names[i]
+
+                gt_mask = cv2.imread(os.path.join(data_path, 'masks', gt_fh.replace('.','_mask.')))
+
+                gt_mask = np.squeeze(cv2.cvtColor(gt_mask, cv2.COLOR_BGR2RGB)[:,:,0:1])
+                print('mask', np.unique(gt_mask))
+                print('pred', np.unique(pred_mask))
             else:
                 gt_fh = dataset.images_file_names[i]
                 #gt_mask = gt_mask.detach().cpu().numpy()
@@ -358,27 +365,30 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--ths_num", default=7, help="how many ths from 0.2 to 0.95. enable multi_ths args to make effective")
-    parser.add_argument("--multi_ths", default=0, help="")
-    parser.add_argument("--unique_th", default=0.3, help="")
+    parser.add_argument("--ths_num", default=5, help="how many ths from 0.2 to 0.95. enable multi_ths args to make effective")
+    parser.add_argument("--multi_ths", default=1, help="")
+    parser.add_argument("--unique_th", default=0.5, help="")
     parser.add_argument("--model_path",
-                        default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/model.pth"
+                        default="../model_results/segformer_k_fold_multiclass_wave_2/nvidia/mit-b5/fold_1/1_fold_w_1.1_1_1_2024_10_18_16_08_32/model.pth"
+                        #../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/model.pth
                         , help="Path to the input model")
-    parser.add_argument("--load_predictions", default=1
+    parser.add_argument("--load_predictions", default=0
                         , help="Path to the input model")
     parser.add_argument("--predictions_folder",
                         default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/test_1/merged_model_results/"
 
                         , help="Path to the input model")
     parser.add_argument("--data_path", default=cropped_tot_bkg_data_path
-                        , help="Path to the input model")
+                        , help="used if load from folder (this scprit is not testes use other script predict from folder")
     parser.add_argument("--df_path", default=k_fold_data_path
                         , help="Path to the input model")
     parser.add_argument("--cropped", default=0   #0
                         , help="Path to the input model")
-    parser.add_argument("--df_path", default=test_1_data_path
-                        , help="the folder containing the dataframe with full size images and masks name"
-                               "you should add also the split (see below) suffix to this path")
+    parser.add_argument("--from_full_to_crop", default=1
+                        , help="Path to the input model")
+    #parser.add_argument("--df_path", default=test_1_data_path
+    #                    , help="the folder containing the dataframe with full size images and masks name"
+    #                           "you should add also the split (see below) suffix to this path")
     parser.add_argument("--split", default="test"
                         , help="Path to the input model")
     parser.add_argument("--remove_small_objs_size", default=100, help="")
@@ -387,7 +397,7 @@ if __name__ == '__main__':
     parser.add_argument("--save_into_model_folder", default=1
                         , help="Path to the input model")
 
-    parser.add_argument("--reduce_labels", default=1
+    parser.add_argument("--reduce_labels", default=0  # IGNORE
                         , help="Path to the input model")
     parser.add_argument("--ignore_index", default=255, help="")
     parser.add_argument("--f1_metrics", default=1, help="")
