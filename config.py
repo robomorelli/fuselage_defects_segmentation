@@ -70,8 +70,8 @@ common_path_train_results_viz = os.path.join(root,'results_viz/train')
 common_path_val_results_viz = os.path.join(root,'results_viz/val')
 common_path_test_results_viz = os.path.join(root,'results_viz/test')
 
-k_fold_data_path = os.path.join(root,'data/k-fold')
-split1_k_fold_data_path = os.path.join(root,'data/k-fold/fold_1')
+k_fold_data_path = os.path.join(root,'data/k-fold_archive')
+split1_k_fold_data_path = os.path.join(root,'data/k-fold_archive/fold_1')
 
 cropped_train_renamed_masks_path = os.path.join(root,'data/train/cropped_data/renamed_masks')
 cropped_train_threshold_results = os.path.join(root,'data/train/cropped_data/threshold_masks')

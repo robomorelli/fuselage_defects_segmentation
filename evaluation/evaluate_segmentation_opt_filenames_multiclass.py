@@ -151,7 +151,7 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
         processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
 
     transform = None
-    if 'k-fold' in df_path:
+    if 'k-fold_archive' in df_path:
         df_path = os.path.join(df_path, f"fold_{fold}", split)
     else:
         df_path = os.path.join(df_path, split)

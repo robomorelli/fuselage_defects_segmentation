@@ -23,7 +23,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123):
 
     image_path = os.path.join(data_path, 'images')
     mask_path = os.path.join(data_path, 'masks')
-    output_dir = os.path.join(data_path, 'k-fold')
+    output_dir = os.path.join(data_path, 'k-fold_archive')
 
     # Get image and mask filenames
     image_files = os.listdir(image_path)
