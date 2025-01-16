@@ -75,43 +75,25 @@ def main(args):
     else:
         cfg.dataset.cropped = 0
 
-    if 'deeplab' in args.config_name:
-        if cfg.opt.processor:
-            processor = None
-        else:
-            processor = None
-        model = torch.hub.load('pytorch/vision:v0.10.0', cfg.model.encoder_name, pretrained=True).to(device)
 
-        if cfg.model.remove_aux:
-            model.aux_classifier = None
-        for param in model.parameters():
-            param.requires_grad = False
-
-        if cfg.model.multichannel:
-            model.classifier = DeepLabHead(2048, num_classes=num_classes+1)
-        else:
-            model.classifier = DeepLabHead(2048, num_classes=1)
-
-        encoder_name = cfg.model.encoder_name
-    elif 'segformer' in args.config_name:
-        if cfg.opt.processor:
-            processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
-        else:
-            processor = None
-        # opening a file
-        with open('./preprocessing/class_mapping.yaml', 'r') as stream:
-            try:
-                # Converts yaml document to python object
-                label2id = yaml.safe_load(stream)
-            except yaml.YAMLError as e:
-                print(e)
-        label2id['bkg'] = 0
-        id2label = {v: k for k, v in label2id.items()}
-        model = SegformerForSemanticSegmentation.from_pretrained(cfg.model.encoder_name,
-                                                                 num_labels=num_classes + 1,
-                                                                 id2label=id2label,
-                                                                 label2id=label2id,
-                                                                 ignore_mismatched_sizes=True)
+    if cfg.opt.processor:
+        processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
+    else:
+        processor = None
+    # opening a file
+    with open('./preprocessing/class_mapping.yaml', 'r') as stream:
+        try:
+            # Converts yaml document to python object
+            label2id = yaml.safe_load(stream)
+        except yaml.YAMLError as e:
+            print(e)
+    label2id['bkg'] = 0
+    id2label = {v: k for k, v in label2id.items()}
+    model = SegformerForSemanticSegmentation.from_pretrained(cfg.model.encoder_name,
+                                                             num_labels=num_classes + 1,
+                                                             id2label=id2label,
+                                                             label2id=label2id,
+                                                             ignore_mismatched_sizes=True)
 
     for param in model.parameters():
         param.requires_grad = False
@@ -241,28 +223,18 @@ def main(args):
                                                            min_lr=9e-8, verbose=True)
     early_stopping = EarlyStopping(patience=cfg.opt.es_patience)
 
-
-    if 'deeplab' in args.config_name:
-        training_cycle_deeplab_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
-                                          val_loader=val_dataloader,
-                                          criterion=criterion, optimizer=optimizer
-                                          , scheduler=scheduler, early_stopping=early_stopping,
-                                          model_name=cfg.model.name,
-                                          out_dir=model_dir, device=device,
-                                          num_epochs=cfg.opt.epochs)
-    else:
-        training_cycle_segformer_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
-                                          val_loader=val_dataloader,
-                                          criterion=criterion, optimizer=optimizer
-                                          , scheduler=scheduler, early_stopping=early_stopping,
-                                          model_name=cfg.model.name,
-                                          out_dir=model_dir, device=device,
-                                          num_epochs=cfg.opt.epochs)
+    training_cycle_segformer_multiclass(cfg=cfg, model=model, train_loader=train_dataloader,
+                                      val_loader=val_dataloader,
+                                      criterion=criterion, optimizer=optimizer
+                                      , scheduler=scheduler, early_stopping=early_stopping,
+                                      model_name=cfg.model.name,
+                                      out_dir=model_dir, device=device,
+                                      num_epochs=cfg.opt.epochs)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='segformer_k_fold_multiclass_wave_2', help="Path to the input image")
+    parser.add_argument("--config_name", default='segformer_k_fold', help="Path to the input image")
     parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()

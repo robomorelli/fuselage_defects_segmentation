@@ -3,7 +3,7 @@ dataset:
   cropped: 1
   random_seed: 123
   shuffle: 1
-  fold: 1
+  fold: 1       # change to switch folder for training
   batch_size: 2
   augmentation: 1
   val_aug: 1
@@ -14,7 +14,7 @@ model:
   name: "model"
   encoder_name: 'nvidia/mit-b5'
   exp_name: '1_fold'
-  num_classes: Null
+  num_classes: 2
   multichannel: 1
 
 opt:
