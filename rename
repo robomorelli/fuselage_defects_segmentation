@@ -1,0 +1,8 @@
+may_data_path = os.path.join(root,'data/may/')
+may_data_images_path = os.path.join(root,'data/may/images')
+may_data_masks_path = os.path.join(root,'data/may/masks')
+may_data_renamed_masks_path = os.path.join(root,'data/may/renamed_masks')
+cropped_may_data_path = os.path.join(root,'data/may/cropped_data')
+cropped_may_images_path = os.path.join(root,'data/may/cropped_data/images')
+cropped_may_masks_path = os.path.join(root,'data/may/cropped_data/masks')
+may_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/may/merged_model_results')
