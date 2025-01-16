@@ -42,7 +42,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--images_path", default=april_data_images_path, help="Path to the input image")
+    parser.add_argument("--images_path", default=may_data_images_path, help="Path to the input image")
     parser.add_argument("--start_from_scratch", default=1, help="Path to the input image")
 
     args = parser.parse_args()

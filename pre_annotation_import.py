@@ -113,7 +113,7 @@ def main(args):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--masks_path", default=feb_mar_apr_model_results, help="Path to the input image")
+    parser.add_argument("--masks_path", default=feb_mar_apr_may_model_results, help="Path to the input image")
     parser.add_argument("--masks_suffix", default=0, help="Path to the input image")
     parser.add_argument("--multiclass", default=1, help="Path to the input image")
 

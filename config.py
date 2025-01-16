@@ -19,6 +19,17 @@ cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_images_path = os.path.join(root,'data/cropped_data/images')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
 
+fine_tuning_data_path = os.path.join(root,'fine_tuning_data')
+fine_tuning_train_images_path = os.path.join(root,'fine_tuning_data/train/images')
+fine_tuning_train_masks_path = os.path.join(root,'fine_tuning_data/train/masks')
+fine_tuning_val_images_path = os.path.join(root,'fine_tuning_data/val/images')
+fine_tuning_val_masks_path = os.path.join(root,'fine_tuning_data/val/masks')
+
+fine_tuning_train_cropped_images_path = os.path.join(root,'fine_tuning_data/train/cropped_images')
+fine_tuning_train_cropped_masks_path = os.path.join(root,'fine_tuning_data/train/cropped_masks')
+fine_tuning_val_cropped_images_path = os.path.join(root,'fine_tuning_data/val/cropped_images')
+fine_tuning_val_cropped_masks_path = os.path.join(root,'fine_tuning_data/val/cropped_masks')
+
 cropped_tot_bkg_images_path = os.path.join(root,'data/cropped_data', 'tot_bkg/images')
 
 data_images_path = os.path.join(root,'data/images')
@@ -42,6 +53,16 @@ cropped_april_data_path = os.path.join(root,'data/april/cropped_data')
 cropped_april_images_path = os.path.join(root,'data/april/cropped_data/images')
 cropped_april_masks_path = os.path.join(root,'data/april/cropped_data/masks')
 april_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/april/merged_model_results')
+
+may_data_path = os.path.join(root,'data/may/')
+may_data_images_path = os.path.join(root,'data/may/images')
+may_data_masks_path = os.path.join(root,'data/may/masks')
+may_data_renamed_masks_path = os.path.join(root,'data/may/renamed_masks')
+cropped_may_data_path = os.path.join(root,'data/may/cropped_data')
+cropped_may_images_path = os.path.join(root,'data/may/cropped_data/images')
+cropped_may_masks_path = os.path.join(root,'data/may/cropped_data/masks')
+may_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/may/merged_model_results')
+
 test_original_data_path = os.path.join(root,'data/original_test/')
 test_original_images_path = os.path.join(root,'data/original_test/images')
 test_original_masks_path = os.path.join(root,'data/original_test/masks')
@@ -50,7 +71,7 @@ cropped_test_original_data_path = os.path.join(root,'data/original_test/cropped_
 cropped_test_original_images_path = os.path.join(root,'data/original_test/cropped_data/images')
 cropped_test_original_masks_path = os.path.join(root,'data/original_test/cropped_data/masks')
 
-feb_mar_apr_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/feb_mar_apr/merged_model_results')
+feb_mar_apr_may_model_results = os.path.join(root,'model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/feb_mar_apr_may/merged_model_results')
 
 
 multiclass_masks_path = os.path.join(root,'data/masks_classes')
@@ -128,4 +149,10 @@ class_names = ["Paint Defect", "Drill Start", "Mark", "Drill Run", "Rilavorazion
 
 map_class_label_to_name = {0:"Paint Defect", 1:"Drill Start", 2:"Mark", 3:"Drill Run", 4:"Rilavorazione Incorretta",
                             5:"Gouge", 6:"Graffio", 7:"Peeling", 8:"Abrasione", 9:"Cage Mark"}
+
+
+custom_list = ["0000_label_iSVx22hl.png", "0000_label_KhubE3m1.png", "0000_label_lY40XnMe.png"
+               ,"0000_label_Pe712dpb.png", "0000_label_uCXpTeJJ.png", "0000_label_UdQfh0C1.png"
+               , "0000_label_XP0UKXUr.png", "0001_label_wmLYCo2j.png", "0002_label_ouHctxiB.png"
+               ,"0006_label_KhubE3m1.png", "0007_label_5caRcr55.png", "00000008_1.png", "0008_label_KhubE3m1.png"]
 

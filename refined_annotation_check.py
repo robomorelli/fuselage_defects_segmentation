@@ -7,6 +7,7 @@ import pandas as pd
 from config import *
 import json
 from datetime import datetime
+from label_studio_sdk import Client
 
 def key_function(key):
     return datetime.strptime(key[:-1], '%Y-%m-%dT%H:%M:%S.%f')
@@ -67,3 +68,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     main(args)
+
+    # Separatamente task Mark e Graffio:
+    # Mettere maschere label graffio nel nome tutt ein una cartella il cui path coincide con "refined_masks_path" (veri args)
+    #

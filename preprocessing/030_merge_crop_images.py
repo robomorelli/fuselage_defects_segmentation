@@ -201,9 +201,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     #parser.add_argument("--crops_path", default=os.path.join(common_path_test_results, f"model_results_{0.45}"), help="")
-    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/test_1/model_results",
+    parser.add_argument("--crops_path", default="../model_results/segformer_k_fold_multiclass/nvidia/mit-b5/fold_4/segformer_processor_decoder_w_1_3_2_2024_03_27_14_31_29/may/model_results",
                         help="")
-    parser.add_argument("--full_size_images_path", default=test_1_data_images_path,
+    parser.add_argument("--full_size_images_path", default=may_data_images_path,
                         help="")
     parser.add_argument("--remove_small_objects", default=250,
                         help="")
