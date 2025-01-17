@@ -180,7 +180,7 @@ if __name__ == "__main__":
                         help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()
 
-    # 512 - 480 step- 0.06- perc bkg
+    # 512 - 480 step- 0.06-0.08 - perc bkg
 
     # Call the function with provided arguments
     crop_images(args)

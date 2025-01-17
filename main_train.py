@@ -1,6 +1,4 @@
 import argparse
-import os
-from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
 from torch.utils.data import DataLoader
 from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass, KFoldDataframeMulticlassProcessor_v2
 import random
@@ -17,19 +15,14 @@ from transformers import (
     SegformerForSemanticSegmentation,
     TrainingArguments, Trainer,
     SegformerImageProcessor)
-import yaml
 import torch
 import torch.optim
-import segmentation_models_pytorch as smp
 from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass, training_cycle_segformer_multiclass
 from utils.opt import EarlyStopping
 import yaml
 import json
 import types
-from torchvision.models.segmentation.deeplabv3 import DeepLabHead
-
 import datetime
-from model.resunet import *
 from config import *
 
 AVAIL_GPUS = min(1, torch.cuda.device_count())
@@ -236,7 +229,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-    parser.add_argument("--config_name", default='segformer_k_fold', help="Path to the input image")
+    parser.add_argument("--config_name", default='segformer', help="Path to the input image")
     parser.add_argument("--fold", default=1, help="Path to the input image")
 
     args = parser.parse_args()
