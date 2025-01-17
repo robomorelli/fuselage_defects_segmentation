@@ -150,7 +150,6 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     test_full_images_filenames = pd.DataFrame(test_dict_full_images)
     test_full_images_filenames.to_csv(os.path.join(test_dir, f'full_size_filenames.csv'), index=False)
 
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")

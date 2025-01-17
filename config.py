@@ -143,12 +143,7 @@ images_2_wave_path = os.path.join(root, 'data/images_2_wave')
 IMG_WIDTH = 4096
 IMG_HEIGHT = 3000
 
-class_names = ["Paint Defect", "Drill Start", "Mark", "Drill Run", "Rilavorazione Incorretta",
-               "Gouge", "Graffio", "Peeling", "Abrasione", "Cage Mark"]
-
-
-map_class_label_to_name = {0:"Paint Defect", 1:"Drill Start", 2:"Mark", 3:"Drill Run", 4:"Rilavorazione Incorretta",
-                            5:"Gouge", 6:"Graffio", 7:"Peeling", 8:"Abrasione", 9:"Cage Mark"}
+num_classes = 2
 
 
 custom_list = ["0000_label_iSVx22hl.png", "0000_label_KhubE3m1.png", "0000_label_lY40XnMe.png"

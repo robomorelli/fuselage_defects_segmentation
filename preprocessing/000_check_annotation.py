@@ -15,7 +15,6 @@ def main(args):
     #full_size_masks_path = "../data/masks_remapped"
     output_folder_contours = os.path.join(Path(full_size_masks_path).parent.as_posix(), "viz_contours")
 
-    num_classes = len(os.listdir(full_size_masks_classes_path))
     print('multiclass for n classes', num_classes)
 
     id_classes = [i + 1 for i in range(num_classes)]
@@ -56,12 +55,13 @@ def main(args):
                 cv2.drawContours(img, contours_mask, -1, color, thickness=2)
                 legend = np.zeros((150, IMG_WIDTH, 3), dtype=np.uint8)
 
-            cv2.putText(legend, 'Mark_gt: Olive', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
+            cv2.putText(legend, 'Mark_gt: Yellow', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
                         2, (0, 128, 0), 4)
             cv2.putText(legend, 'Graffio_gt : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
                         2, (255, 255, 0), 4)
 
             combined_image = np.vstack((img, legend))
+            combined_image = cv2.cvtColor(combined_image, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(output_folder_contours, fh), combined_image)
         except:
             img = cv2.imread(os.path.join(full_size_images_path, fh))
@@ -72,8 +72,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--full_size_images_path", default=data_images_path,
-                        help="")
+    parser.add_argument("--full_size_images_path", default=data_images_path, help="")
     #                    help="")
     parser.add_argument("--start_from_scratch", default=1, help="")
 

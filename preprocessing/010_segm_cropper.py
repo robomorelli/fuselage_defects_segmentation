@@ -28,9 +28,6 @@ def has_positive_pixel(mask_path):
 
 def crop_images(args):
 
-    num_classes = len(os.listdir(full_size_masks_classes_path))
-    print('multiclass for n classes', num_classes)
-
     # Example usage
     images_input_folder = args.images_path
     masks_input_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'masks')
@@ -178,7 +175,7 @@ if __name__ == "__main__":
     parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping - 480")
     parser.add_argument("--save_bkg_perc", type=int, default=0.08, help="probability to retain a background image - 0.08")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
-    parser.add_argument("--convert_from_npy", type=int, default=1, help="remove all the filtered_images into save_path dir")
+    parser.add_argument("--convert_from_npy", type=int, default=0, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0,
                         help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()

@@ -120,6 +120,8 @@ def main(args):
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'}
             )
+            cfg.dataset.normalize_imagenet = 0
+            cfg.dataset.automatic_normalize = 0
         else:
             if cfg.dataset.normalize_imagenet:
                 print('imagenet normalization')
