@@ -1,11 +1,7 @@
 import os.path
-
-import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 import sys
 sys.path.append('..')
-#matplotlib.use('Qt5Agg')
 from PIL import Image
 import argparse
 import shutil
@@ -13,6 +9,7 @@ import random
 from tqdm import tqdm
 from pathlib import Path
 import cv2
+import pandas as pd
 from config import *
 
 def has_positive_pixel(mask_path):
@@ -29,6 +26,7 @@ def has_positive_pixel(mask_path):
 def crop_images(args):
 
     # Example usage
+    oversampling_file_path = args.oversampling_file
     images_input_folder = args.images_path
     masks_input_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'masks')
     save_bkg_perc = args.save_bkg_perc
@@ -36,11 +34,13 @@ def crop_images(args):
         image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/images')
         mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/masks')
         mask_output_folder_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_viz/tot_bkg/masks')
+        mask_output_folder_bboxes_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_bboxes_viz/tot_bkg/masks')
         save_bkg_perc = 1.00
     else:
         image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/images')
         mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/masks')
         mask_output_folder_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_viz/masks')
+        mask_output_folder_bboxes_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_bboxes_viz/masks')
     crop_size = args.crop_size  # Adjust this according to your needs
     shift = args.step_size  # Adjust this according to your needs
 
@@ -50,15 +50,28 @@ def crop_images(args):
             os.makedirs(image_output_folder)
         else:
             os.makedirs(image_output_folder)
+
         if os.path.exists(mask_output_folder):
             shutil.rmtree(mask_output_folder)
-            os.makedirs(mask_output_folder, exist_ok=True)
-        if os.path.exists(mask_output_folder_viz):
-            shutil.rmtree(mask_output_folder_viz)
-            os.makedirs(mask_output_folder_viz,  exist_ok=True)
+            os.makedirs(mask_output_folder)
         else:
             os.makedirs(mask_output_folder)
+
+        if os.path.exists(mask_output_folder_viz):
+            shutil.rmtree(mask_output_folder_viz)
             os.makedirs(mask_output_folder_viz)
+        else:
+            os.makedirs(mask_output_folder_viz)
+
+        ''' 
+        if os.path.exists(mask_output_folder_bboxes_viz):
+            shutil.rmtree(mask_output_folder_bboxes_viz)
+            os.makedirs(mask_output_folder_bboxes_viz)
+        else:
+            os.makedirs(mask_output_folder_bboxes_viz)
+        '''
+
+
     else:
         # Create output folder if it doesn't exist
         if not os.path.exists(image_output_folder):
@@ -66,10 +79,19 @@ def crop_images(args):
         if not os.path.exists(mask_output_folder):
             os.makedirs(mask_output_folder)
             os.makedirs(mask_output_folder_viz)
+            #os.makedirs(mask_output_folder_bboxes_viz)
 
     # List all image files in the input folder
     images_files = [f for f in os.listdir(images_input_folder)
                     if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
+
+    if oversampling_file_path is not None:
+        oversamplig_file_names = list(pd.read_excel(oversampling_file_path)['name'].values)
+        oversamplig_factor = list(pd.read_excel(oversampling_file_path)['factor'].values)
+        oversampling_dict = {k:v*args.base_oversampling_factor for k, v in zip(oversamplig_file_names, oversamplig_factor)}
+    else:
+        oversamplig_file_names = []
+        oversampling_dict = {}
 
     if args.convert_from_npy:
         if not os.path.exists(masks_input_folder):
@@ -87,8 +109,6 @@ def crop_images(args):
             npy_data_uint8 = npy_data.astype(np.uint8)
             image = Image.fromarray(npy_data_uint8)
             image.save(os.path.join(masks_input_folder, mf.replace('.npy', '_mask.png')))
-    
-    masks_files = [f for f in os.listdir(masks_input_folder) if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
 
 
     for image_file in tqdm(images_files):
@@ -99,6 +119,7 @@ def crop_images(args):
         img_output_path = os.path.join(image_output_folder, f"cropped_{image_file}")
         msk_output_path = os.path.join(mask_output_folder, f"cropped_{image_file}")
         msk_output_path_viz = os.path.join(mask_output_folder_viz, f"cropped_{image_file}")
+        #bboxes_output_path_viz = os.path.join(mask_output_folder_bboxes_viz, f"cropped_{image_file}")
 
 
         # Open the image
@@ -122,6 +143,11 @@ def crop_images(args):
             # Iterate over the image, cropping and saving
             for y in range(0, height, shift):
                 for x in range(0, width, shift):
+                    if os.path.basename(img_output_path.replace('.', '_{}_{}.'.format(x, y))) in oversamplig_file_names:
+                        oversamplig_factor = oversampling_dict[os.path.basename(img_output_path.replace('.', '_{}_{}.'.format(x, y)))]
+                        print(os.path.basename(img_output_path.replace('.', '_{}_{}.'.format(x, y))))
+                    else:
+                        oversamplig_factor = 1
                     # Crop the image
                     if x + crop_size < IMG_WIDTH and y + crop_size < IMG_HEIGHT:
                         cropped_img = img.crop((x, y, x + crop_size, y + crop_size))
@@ -137,29 +163,33 @@ def crop_images(args):
                     if np.sum(np.array(cropped_msk)) > 1:
                         #print(f'label on {masks_input_path}')
                         # Save the cropped image to the output folder
-                        cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
-                        cropped_msk = np.array(cropped_msk)
-                        if cropped_msk.max() > num_classes:
-                            print('before',np.unique(cropped_msk))
-                            for i in range(num_classes):
-                                cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
-                            print('after', np.unique(cropped_msk))
-                        cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                    np.squeeze(cropped_msk))
-                        print(np.unique(cropped_msk))
-                        cropped_msk = (np.array(cropped_msk)/num_classes)*255
-                        cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
-                                    np.squeeze(cropped_msk))
+                        for i in range(oversamplig_factor):
 
+                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x+i, y+i)))
+                            cropped_msk = np.array(cropped_msk)
+
+                            if cropped_msk.max() > num_classes:
+                                #print('before',np.unique(cropped_msk))
+                                for i in range(num_classes):
+                                    cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
+                                #print('after', np.unique(cropped_msk))
+
+                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x+i, y+i)),
+                                        np.squeeze(cropped_msk))
+                            #print(np.unique(cropped_msk))
+                            cropped_msk = (np.array(cropped_msk)/num_classes)*255
+                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x+i, y+i)),
+                                        np.squeeze(cropped_msk))
+                            ### SAVE BBOXES OF ANNOTATED MASK
                     else:
                         #print(f'no label on {masks_input_path}')
                         if random.random() >= 1 - save_bkg_perc:
                             cropped_msk = np.array(cropped_msk)
                             if cropped_msk.max() > num_classes:
-                                print('before', np.unique(cropped_msk))
+                                #print('before', np.unique(cropped_msk))
                                 for i in range(num_classes):
                                     cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
-                                print('after', np.unique(cropped_msk))
+                                #print('after', np.unique(cropped_msk))
                             cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y))
                                         , np.squeeze(np.array(cropped_msk)))
                             cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
@@ -176,9 +206,11 @@ if __name__ == "__main__":
     parser.add_argument("--save_bkg_perc", type=int, default=0.08, help="probability to retain a background image - 0.08")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--convert_from_npy", type=int, default=0, help="remove all the filtered_images into save_path dir")
-    parser.add_argument("--total_background", type=int, default=0,
-                        help="remove all the filtered_images into save_path dir")
+    parser.add_argument("--total_background", type=int, default=0, help="remove all the filtered_images into save_path dir")
+    parser.add_argument("--oversampling_file", type=str, default='./oversampling.xlsx', help="")
+    parser.add_argument("--base_oversampling_factor", type=int, default=150, help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()
+
 
     # 512 - 480 step- 0.06-0.08 - perc bkg
 

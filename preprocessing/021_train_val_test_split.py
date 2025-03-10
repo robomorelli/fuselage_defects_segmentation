@@ -25,7 +25,7 @@ def main(data_path, train_ratio=0.75, val_ratio=0.15, seed=123):
     # Create output directories
     train_dir = os.path.join(data_path, 'train')
     val_dir = os.path.join(data_path, 'val')
-    test_dir = os.path.join(data_path, 'test1')
+    test_dir = os.path.join(data_path, 'test')
     for directory in [train_dir, val_dir, test_dir]:
         if os.path.exists(directory):
             shutil.rmtree(directory)

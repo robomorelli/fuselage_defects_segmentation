@@ -53,7 +53,7 @@ def main(args):
 
                 color = (0, 128, 0) if class_value == 1 else (255, 255, 0)
                 cv2.drawContours(img, contours_mask, -1, color, thickness=2)
-                legend = np.zeros((150, IMG_WIDTH, 3), dtype=np.uint8)
+                legend = np.zeros((150, img.shape[1], 3), dtype=np.uint8)
 
             cv2.putText(legend, 'Mark_gt: Yellow', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
                         2, (0, 128, 0), 4)
@@ -61,19 +61,20 @@ def main(args):
                         2, (255, 255, 0), 4)
 
             combined_image = np.vstack((img, legend))
+            # convert to BGR again to save with cv2
             combined_image = cv2.cvtColor(combined_image, cv2.COLOR_RGB2BGR)
+            #cropped_0000_label_0xjUoY7D_1440_480
             cv2.imwrite(os.path.join(output_folder_contours, fh), combined_image)
         except:
             img = cv2.imread(os.path.join(full_size_images_path, fh))
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
             print(f'black mask {fh}')
             cv2.imwrite(os.path.join(output_folder_contours, fh), img)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--full_size_images_path", default=data_images_path, help="")
-    #                    help="")
+    parser.add_argument("--full_size_images_path", default=cropped_images_path, help="")
     parser.add_argument("--start_from_scratch", default=1, help="")
 
     args = parser.parse_args()

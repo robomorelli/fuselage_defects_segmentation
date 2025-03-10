@@ -106,10 +106,10 @@ def main(args):
             print('train augmentation')
             transform = A.Compose(
                 [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.5, p=0.5),
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
-                 Blur(blur_limit=15, p=0.3),
+                 Blur(blur_limit=19, p=0.35),
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'}
             )
@@ -126,10 +126,10 @@ def main(args):
                 std = (1.0, 1.0, 1.0)
             transform = A.Compose(
                 [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.5, p=0.5),
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
-                 Blur(blur_limit=15, p=0.3),
+                 Blur(blur_limit=19, p=0.3),
                  A.Normalize(mean=mean, std=std),
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'})
@@ -141,10 +141,10 @@ def main(args):
         if cfg.opt.processor:
             val_transform = A.Compose(
                 [A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.2, rotate_limit=30, p=0.5),
-                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+                 A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.5, p=0.5),
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
-                 Blur(blur_limit=15, p=0.3),
+                 Blur(blur_limit=19, p=0.3),
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'}
             )

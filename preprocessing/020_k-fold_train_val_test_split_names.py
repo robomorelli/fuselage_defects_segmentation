@@ -27,6 +27,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     random.seed(seed, version=2)
 
     image_path = os.path.join(data_path, 'images')
+    oversampling_file_path = args.oversampling_file
 
     output_dir = os.path.join(data_path, 'k-fold')
     if args.start_from_scratch:
@@ -43,6 +44,11 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
 
     cropped_image_files = os.listdir(os.path.join(Path(image_path).parent.as_posix(), 'cropped_data/images'))
     cropped_masks_files = [x.replace('.', '_mask.') for x in cropped_image_files]
+
+    if oversampling_file_path is not None:
+        oversamplig_file_names = list(pd.read_excel(oversampling_file_path)['name'].values)
+    else:
+        oversamplig_file_names = []
 
     # Check if the number of images and masks are the same
     if len(image_files) != len(mask_files):
@@ -72,8 +78,10 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
 
         test_index = []
         for element in lines:
-            if element in image_files:
+            if element in image_files and element not in oversamplig_file_names:
                 test_index.append(image_files.index(element))
+                if element in oversampling_file_path:
+                    print(f'REMOVING THIS FILE {element} from test since it is in oversampling')
 
         test_data = [(crop_fh, crop_fh.replace('.', '_mask.')) for idx in test_index for crop_fh in
                      cropped_image_files if 'cropped_' + data[idx][0].split('.')[0] == '_'.join(crop_fh.split('_')[:-2])]
@@ -160,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=123, help="Patch size for extraction")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="Patch size for extraction")
     parser.add_argument("--test_from_txt_file", default='../data/test_images.txt', help="Patch size for extraction")
+    parser.add_argument("--oversampling_file", type=str, default='./oversampling.xlsx', help="")
     args = parser.parse_args()
 
     main(args.data_path, args.n_splits, args.val_ratio, args.seed, args.start_from_scratch)
