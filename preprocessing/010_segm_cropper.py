@@ -86,7 +86,7 @@ def crop_images(args):
                     if f.endswith(('.png', '.jpg', '.jpeg', '.gif', '.bmp'))]
 
     if oversampling_file_path is not None:
-        oversamplig_file_names = list(pd.read_excel(oversampling_file_path)['name'].values)
+        oversamplig_file_names = [x.strip(' ') for x in list(pd.read_excel(oversampling_file_path)['name'].values)]
         oversamplig_factor = list(pd.read_excel(oversampling_file_path)['factor'].values)
         oversampling_dict = {k:v*args.base_oversampling_factor for k, v in zip(oversamplig_file_names, oversamplig_factor)}
     else:
@@ -121,7 +121,6 @@ def crop_images(args):
         msk_output_path_viz = os.path.join(mask_output_folder_viz, f"cropped_{image_file}")
         #bboxes_output_path_viz = os.path.join(mask_output_folder_bboxes_viz, f"cropped_{image_file}")
 
-
         # Open the image
         with Image.open(image_input_path) as img:
             # Get the width and height of the image
@@ -143,6 +142,7 @@ def crop_images(args):
             # Iterate over the image, cropping and saving
             for y in range(0, height, shift):
                 for x in range(0, width, shift):
+
                     if os.path.basename(img_output_path.replace('.', '_{}_{}.'.format(x, y))) in oversamplig_file_names:
                         oversamplig_factor = oversampling_dict[os.path.basename(img_output_path.replace('.', '_{}_{}.'.format(x, y)))]
                         print(os.path.basename(img_output_path.replace('.', '_{}_{}.'.format(x, y))))
@@ -159,13 +159,12 @@ def crop_images(args):
                         cropped_img = img.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
                         cropped_msk = msk.crop((x, IMG_HEIGHT - crop_size, x + crop_size, IMG_HEIGHT))
 
-
                     if np.sum(np.array(cropped_msk)) > 1:
                         #print(f'label on {masks_input_path}')
                         # Save the cropped image to the output folder
-                        for i in range(oversamplig_factor):
+                        for j in range(oversamplig_factor):
 
-                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x+i, y+i)))
+                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x+j, y+j)))
                             cropped_msk = np.array(cropped_msk)
 
                             if cropped_msk.max() > num_classes:
@@ -174,13 +173,14 @@ def crop_images(args):
                                     cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
                                 #print('after', np.unique(cropped_msk))
 
-                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x+i, y+i)),
+                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x+j, y+j)),
                                         np.squeeze(cropped_msk))
                             #print(np.unique(cropped_msk))
                             cropped_msk = (np.array(cropped_msk)/num_classes)*255
-                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x+i, y+i)),
+                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x+j, y+j)),
                                         np.squeeze(cropped_msk))
                             ### SAVE BBOXES OF ANNOTATED MASK
+
                     else:
                         #print(f'no label on {masks_input_path}')
                         if random.random() >= 1 - save_bkg_perc:
@@ -190,11 +190,11 @@ def crop_images(args):
                                 for i in range(num_classes):
                                     cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
                                 #print('after', np.unique(cropped_msk))
-                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y))
+                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x+j, y+j))
                                         , np.squeeze(np.array(cropped_msk)))
-                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
+                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x+j, y+j)))
                             cropped_msk = (np.array(cropped_msk) / num_classes)*255
-                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
+                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x+j, y+j)),
                                         np.squeeze(cropped_msk))
 if __name__ == "__main__":
 
