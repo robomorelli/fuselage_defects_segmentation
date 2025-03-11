@@ -202,7 +202,7 @@ if __name__ == "__main__":
     parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction - 512")
     parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping - 480")
-    parser.add_argument("--save_bkg_perc", type=int, default=0.08, help="probability to retain a background image - 0.08")
+    parser.add_argument("--save_bkg_perc", type=int, default=0.1, help="probability to retain a background image - 0.08")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--convert_from_npy", type=int, default=0, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0, help="remove all the filtered_images into save_path dir")
