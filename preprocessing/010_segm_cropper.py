@@ -199,7 +199,6 @@ def crop_images(args):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
-
     parser.add_argument("--images_path", default=data_images_path, help="Path to the input image")
     parser.add_argument("--crop_size", type=int, default=512, help="Patch size for extraction - 512")
     parser.add_argument("--step_size", type=int, default=480, help="Step size for the cropping - 480")
