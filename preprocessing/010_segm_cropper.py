@@ -190,11 +190,11 @@ def crop_images(args):
                                 for i in range(num_classes):
                                     cropped_msk[cropped_msk == 255 / (i + 1)] = num_classes - i
                                 #print('after', np.unique(cropped_msk))
-                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x+j, y+j))
+                            cv2.imwrite(msk_output_path.replace('.', '_{}_{}_mask.'.format(x, y))
                                         , np.squeeze(np.array(cropped_msk)))
-                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x+j, y+j)))
+                            cropped_img.save(img_output_path.replace('.', '_{}_{}.'.format(x, y)))
                             cropped_msk = (np.array(cropped_msk) / num_classes)*255
-                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x+j, y+j)),
+                            cv2.imwrite(msk_output_path_viz.replace('.', '_{}_{}_mask.'.format(x, y)),
                                         np.squeeze(cropped_msk))
 if __name__ == "__main__":
 
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     parser.add_argument("--convert_from_npy", type=int, default=0, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--total_background", type=int, default=0, help="remove all the filtered_images into save_path dir")
     parser.add_argument("--oversampling_file", type=str, default='./oversampling.xlsx', help="")
-    parser.add_argument("--base_oversampling_factor", type=int, default=150, help="remove all the filtered_images into save_path dir")
+    parser.add_argument("--base_oversampling_factor", type=int, default=100, help="remove all the filtered_images into save_path dir")
     args = parser.parse_args()
 
 
