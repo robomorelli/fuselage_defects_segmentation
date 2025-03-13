@@ -19,11 +19,11 @@ def main(args):
 
     id_classes = [i + 1 for i in range(num_classes)]
     colors = [(0, 255, 0),  # Green
-              (0, 0, 255),  # Red
-              (255, 0, 0),  # Blue
-              (255, 255, 0),  # Cyan
+              (0, 0, 255),  # Blue
+              (255, 0, 0),  # Red
+              (255, 255, 0),  # Yellow
               (255, 0, 255),  # Magenta
-              (0, 255, 255),  # Yellow
+              (0, 255, 255),  # Cyan
               (128, 0, 0),  # Maroon
               (0, 128, 0)]  # Olive
 
@@ -51,14 +51,14 @@ def main(args):
                 class_gt = np.uint8(gt == class_value)
                 contours_mask, _ = cv2.findContours(class_gt, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-                color = (0, 128, 0) if class_value == 1 else (255, 255, 0)
+                color = (0, 255, 0) if class_value == 1 else (0, 0, 255)
                 cv2.drawContours(img, contours_mask, -1, color, thickness=2)
                 legend = np.zeros((150, img.shape[1], 3), dtype=np.uint8)
 
-            cv2.putText(legend, 'Mark_gt: Yellow', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                        2, (0, 128, 0), 4)
-            cv2.putText(legend, 'Graffio_gt : Cyan', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
-                        2, (255, 255, 0), 4)
+            cv2.putText(legend, 'Mark_gt: Green', (1000, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                        2, (0, 255, 0), 4)
+            cv2.putText(legend, 'Graffio_gt : Blu', (1000, 110), cv2.FONT_HERSHEY_SIMPLEX,
+                        2, (0, 0, 255), 4)
 
             combined_image = np.vstack((img, legend))
             # convert to BGR again to save with cv2
@@ -74,7 +74,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
-    parser.add_argument("--full_size_images_path", default=cropped_images_path, help="")
+    parser.add_argument("--full_size_images_path", default=data_images_path, help="")
     parser.add_argument("--start_from_scratch", default=1, help="")
 
     args = parser.parse_args()

@@ -1,6 +1,5 @@
 dataset:
   data_path: "./data/cropped_data/"
-  cropped: 1
   random_seed: 123
   shuffle: 1
   fold: 1       # change to switch folder for training
@@ -11,7 +10,7 @@ dataset:
   automatic_normalize: 0
 
 model:
-  name: "model"
+  name: "segformer"
   encoder_name: 'nvidia/mit-b5'
   exp_name: '1_fold'
   num_classes: 2

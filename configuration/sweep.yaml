@@ -1,0 +1,23 @@
+method: bayes  # Optimization method: 'grid', 'random', or 'bayes'
+metric:
+  name: val_loss  # Metric to optimize (logged by YOLO)
+  goal: minimize # Goal is to maximize mAP@0.5
+parameters:
+  fold:
+    values: [1]
+  epochs:  # Number of training epochs
+    values: [100]
+  batch:
+    values: [12, 24, 36]
+  unfreeze:
+    values: [1, 10, 50, 1000]
+  classes_weights:
+    values: [[1,1,1], [1.1,1,1], [1,1.1,1], [1,1,1.1]]
+  lr:
+    values: [ 0.0001, 0.0003, 0.0001, 0.0003 ]
+  lr_patience:
+      values: [3, 5]
+  es_patience:
+    values: [7, 10]
+program:
+  train.py

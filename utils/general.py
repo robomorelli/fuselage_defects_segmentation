@@ -2,8 +2,25 @@ import os
 import random
 import shutil
 from pathlib import Path
+import yaml
+import json
+import types
 from config import *
 
+# Helper function to read YAML files
+def read_yaml(file_path):
+    with open(file_path, 'r') as file:
+        return yaml.safe_load(file)
+
+def load_object(dct):
+    return types.SimpleNamespace(**dct)
+
+
+def read_config(config_name):
+    with open(os.path.join(config_name), 'r') as f:
+        cfg = yaml.load(f, Loader=yaml.Loader)
+        cfg = json.loads(json.dumps(cfg), object_hook=load_object)
+    return cfg
 
 def sample_and_divide(images_input_folder, sample_percentage=0.3,
                       train_ratio=0.75, divide=True, custom_list = [], start_from_scratch=0):
@@ -81,7 +98,6 @@ def sample_and_divide(images_input_folder, sample_percentage=0.3,
             shutil.copy(os.path.join(images_input_folder, image), os.path.join(fine_tuning_train_images_path, image))
             shutil.copy(os.path.join(masks_input_folder, image.replace('.', '_mask.'))
                         , os.path.join(fine_tuning_train_masks_path, image.replace('.', '_mask.')))
-
 
 
 if __name__ == '__main__':

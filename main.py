@@ -1,6 +1,6 @@
 import argparse
 from torch.utils.data import DataLoader
-from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass, KFoldDataframeMulticlassProcessor_v2
+from dataset.segmentation import KFoldDataframe, BinarySegmentationPil, KFoldDataframeMulticlass, KFoldDataframeMulticlassProcessor
 import random
 import albumentations as A
 from albumentations.pytorch import ToTensorV2
@@ -67,7 +67,6 @@ def main(args):
         cfg.dataset.cropped = 1
     else:
         cfg.dataset.cropped = 0
-
 
     if cfg.opt.processor:
         processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
@@ -175,10 +174,10 @@ def main(args):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframeMulticlassProcessor_v2(data_path=data_path, df_path=train_df_path,
+    train_dataset = KFoldDataframeMulticlassProcessor(data_path=data_path, df_path=train_df_path,
                                    transform=transform, cropped=cfg.dataset.cropped, normalize_imagenet=cfg.dataset.normalize_imagenet,
                             processor=processor)    #,rescale_before_norm=cfg.dataset.rescale_before_norm)
-    val_dataset = KFoldDataframeMulticlassProcessor_v2(data_path=data_path, df_path=val_df_path,
+    val_dataset = KFoldDataframeMulticlassProcessor(data_path=data_path, df_path=val_df_path,
                                  transform=val_transform, cropped=cfg.dataset.cropped, normalize_imagenet=cfg.dataset.normalize_imagenet,
                                 processor=processor)    #,rescale_before_norm=cfg.dataset.rescale_before_norm)
 

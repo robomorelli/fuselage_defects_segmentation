@@ -373,8 +373,7 @@ class KFoldDataframeMulticlass(Dataset):
             return x
 
 
-
-class KFoldDataframeMulticlassProcessor_v2(Dataset):
+class KFoldDataframeMulticlassProcessor(Dataset):
     """Image (semantic) segmentation dataset."""
 
     def __init__(self, data_path, df_path=None, df=None, from_folder = False, idxs=None, transform=None,

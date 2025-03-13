@@ -11,6 +11,11 @@ root = '/'.join(root)
 root_data_path = os.path.join(root,'data')
 conf_path = os.path.join(root,'configuration')
 
+class_mapping_outfile = os.path.join(root,'preprocessing/class_mapping.yaml')
+class_mapping_viz_outfile = os.path.join(root,'preprocessing/class_mapping_viz.yaml')
+
+config_folder = os.path.join(root,'configuration')
+
 # Train data path
 data_path = os.path.join(root,'data')
 masks_viz_path = os.path.join(root,'data/visualization')
@@ -144,7 +149,6 @@ IMG_WIDTH = 4096
 IMG_HEIGHT = 3000
 
 num_classes = 2
-
 
 custom_list = ["0000_label_iSVx22hl.png", "0000_label_KhubE3m1.png", "0000_label_lY40XnMe.png"
                ,"0000_label_Pe712dpb.png", "0000_label_uCXpTeJJ.png", "0000_label_UdQfh0C1.png"
