@@ -112,13 +112,11 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
     if not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
 
-    wandb.init(project=cfg.wandb_project, name=model_name, config=cfg)
-
     val_loss = float('inf')
     train_losses, val_losses = [], []
 
     # Initialize IoU metric
-    iou_metric = JaccardIndex(task="multiclass", num_classes=cfg.num_classes).to(device)
+    iou_metric = JaccardIndex(task="multiclass", num_classes=num_classes+1).to(device)
 
     for epoch in range(num_epochs):
         model.train()
@@ -553,10 +551,10 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
     train_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "train")
     val_df_path = os.path.join(k_fold_data_path, f'fold_{cfg.dataset.fold}', "val")
 
-    train_dataset = KFoldDataframeMulticlassProcessor(data_path=data_path, df_path=train_df_path,
+    train_dataset = KFoldDataframeMulticlassProcessor(data_path=cfg.dataset.data_path, df_path=train_df_path,
                                    transform=transform, normalize_imagenet=cfg.dataset.normalize_imagenet,
                             processor=processor)    #,rescale_before_norm=cfg.dataset.rescale_before_norm)
-    val_dataset = KFoldDataframeMulticlassProcessor(data_path=data_path, df_path=val_df_path,
+    val_dataset = KFoldDataframeMulticlassProcessor(data_path=cfg.dataset.data_path, df_path=val_df_path,
                                  transform=val_transform, normalize_imagenet=cfg.dataset.normalize_imagenet,
                                 processor=processor)    #,rescale_before_norm=cfg.dataset.rescale_before_norm)
 

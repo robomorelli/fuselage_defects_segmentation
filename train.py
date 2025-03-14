@@ -2,8 +2,9 @@ import torch
 import torch.optim
 from utils.training import training_cycle_segformer_multiclass
 from utils.opt import EarlyStopping
-import datetime
+from datetime import datetime
 import wandb
+from box import Box
 from utils.training import load_model, create_dataloader
 from config import *
 
@@ -16,9 +17,9 @@ def train():
     else:
         run = wandb.init()
 
-    cfg =  wandb.config.get('conf_yaml')
-    cfg.dataset.fold = wandb.config.get('batch', 12)
-    cfg.opt.weights =  wandb.config.get('classes_weights', 12)
+    cfg =  Box(wandb.config.get('cfg'))
+    cfg.dataset.fold = wandb.config.get('fold', 1)
+    cfg.opt.weights =  wandb.config.get('classes_weights')
     cfg.opt.lr = wandb.config.get('lr')
     cfg.opt.es_patience = wandb.config.get('es_patience', '7')
     cfg.opt.lr_patience = wandb.config.get('lr_patience', '3')
@@ -39,7 +40,8 @@ def train():
 
     # Define additional arguments
     batch_size = wandb.config.get('batch', 12)  # Default batch size if not in config
-    device = wandb.config.get('devices', '0')
+    device_id = wandb.config.get('devices', '0')
+    device = f"cuda:{device_id}" if torch.cuda.is_available() else "cpu"
 
     if device_env:
         device = device_env

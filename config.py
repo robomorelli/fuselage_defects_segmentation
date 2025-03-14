@@ -22,6 +22,7 @@ masks_viz_path = os.path.join(root,'data/visualization')
 full_size_masks_classes_path = os.path.join(root,'data/masks_classes')
 cropped_data_path = os.path.join(root,'data/cropped_data')
 cropped_images_path = os.path.join(root,'data/cropped_data/images')
+cropped_masks_path = os.path.join(root,'data/cropped_data/masks')
 cropped_tot_bkg_data_path = os.path.join(root,'data/cropped_data', 'tot_bkg')
 
 fine_tuning_data_path = os.path.join(root,'fine_tuning_data')
