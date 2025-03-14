@@ -13,7 +13,7 @@ dataset:
 model:
   name: "model"
   encoder_name: 'nvidia/mit-b5'
-  exp_name: '1_fold'
+  exp_name: 'fold_1_oversampling'
   num_classes: 2
   multichannel: 1
 
@@ -24,7 +24,7 @@ opt:
   epochs: 200
   num_workers: 24
   logit_loss: 0
-  weight: [1.1, 1, 1]  #Null
+  weight: [1, 1, 1.03]  #Null
   from_last_to_unfreeze: 10000
   save_each_epoch: 0
   crossentropy_loss: 1
