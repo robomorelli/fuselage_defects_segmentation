@@ -1,7 +1,3 @@
-method: bayes  # Optimization method: 'grid', 'random', or 'bayes'
-metric:
-  name: Validation Loss  # Metric to optimize (logged by YOLO)
-  goal: minimize # Goal is to maximize mAP@0.5
 parameters:
   fold:
     values: [1]
@@ -9,6 +5,8 @@ parameters:
     values: [100]
   batch:
     values: [2]
+  encoder_names:
+    values: ["nvidia/mit-b5"]
   unfreeze:
     values: [1, 10, 50, 1000]
   classes_weights:

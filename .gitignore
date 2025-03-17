@@ -5,3 +5,14 @@
 /data/val
 /data/test
 /data/k-fold.zip
+/second_dataset_version_segmentation/
+/segformer_hyp_opt_zbook/
+/segformer_hyp_opt_test/
+/segformer_hyp_opt_dv/
+/segformer_hyp_opt/
+/segformer_k_fold_multiclass/
+/results/
+/documents/
+/data/cropped_data_viz/
+/data/viz_contours/
+/data/images_bkp/

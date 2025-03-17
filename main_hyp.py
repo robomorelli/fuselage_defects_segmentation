@@ -19,6 +19,16 @@ def main(args):
     # Read sweep configuration
     sweep_config = read_yaml(sweep_yaml)
     model_cfg = Box(read_yaml(cfg_yaml))
+
+    metric_block = {
+        'name': model_cfg.opt.metric_name,  # Metric you want to optimize
+        'goal': model_cfg.opt.metric_goal  # Or 'maximize' depending on your goal
+    }
+    method = model_cfg.opt.method
+
+    # Add the metric block to the sweep configuration
+    sweep_config['metric'] = metric_block
+    sweep_config['method'] = method
     sweep_config['parameters']['cfg'] = {'value': model_cfg}  # Add dataset YAML dynamically
     sweep_config['parameters']['project_name'] = {'value': args.project_name}  # Add model dynamically
     sweep_config['parameters']['ngpus'] = {'value': args.ngpus}
@@ -52,7 +62,7 @@ if __name__ == '__main__':
     parser.add_argument("--ncpus", default=6, help="")
     parser.add_argument("--exps_num", default=10, help="")
     parser.add_argument("--group", default=None, help="")
-    parser.add_argument("--sweep_id", default="aa3wmwih", help="aa3wmwih")
+    parser.add_argument("--sweep_id", default=None, help="aa3wmwih")
 
     args, unknown = parser.parse_known_args()
     main(args)

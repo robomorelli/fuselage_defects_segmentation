@@ -108,15 +108,23 @@ def training_cycle(cfg, model, train_loader, val_loader, criterion, optimizer,
 
 def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, criterion, optimizer,
                                         scheduler, early_stopping, model_name='cnn',
-                                        out_dir='model_results', device='cpu', num_epochs=200):
+                                        out_dir='model_results', device='cpu', num_epochs=200, metric_goal="maximize"):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
 
-    val_loss = float('inf')
-    train_losses, val_losses = [], []
+    if metric_goal == "minimize":
+        best_metric = float("inf")  # Start with a high value for minimization
+    else:
+        best_metric = float("-inf")  # Start with a low value for maximization
 
+    # Do a metric class that based on the name instntiate the right object
+    # Do a metric class that based on the name instntiate the right object
+    # Do a metric class that based on the name instntiate the right object
     # Initialize IoU metric
     iou_metric = JaccardIndex(task="multiclass", num_classes=num_classes+1).to(device)
+
+    val_loss = float('inf')
+    train_losses, val_losses = [], []
 
     for epoch in range(num_epochs):
         model.train()
@@ -153,6 +161,7 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
             train_iou_epoch = running_iou / len(train_loader)
             train_losses.append(train_loss_epoch)
 
+            # this is the log dict logging
             wandb.log({"Train Loss": train_loss_epoch, "Train IoU": train_iou_epoch, "Epoch": epoch})
 
         model.eval()
@@ -194,8 +203,12 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
             if early_stopping.early_stop:
                 break
 
-            if val_loss_epoch < val_loss:
-                print(f'Val loss improved from {val_loss} to {val_loss_epoch}, saving model...')
+            save_condition = (metric_goal == "minimize" and val_loss_epoch < best_metric) or \
+                             (metric_goal == "maximize" and val_iou_epoch > best_metric)
+
+            if save_condition:
+                best_metric = val_loss_epoch if metric_goal == "minimize" else val_iou_epoch
+                print(f'Validation {metric_goal} improved, saving model...')
                 torch.save({
                     'cfg': cfg,
                     'epoch': epoch,
@@ -205,7 +218,6 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                     'train_loss_history': train_losses,
                     'val_loss_history': val_losses,
                 }, os.path.join(out_dir, f'{model_name}.pth'))
-                val_loss = val_loss_epoch
 
     wandb.finish()
 

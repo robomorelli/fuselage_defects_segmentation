@@ -64,11 +64,17 @@ def train():
 
     # Explicitly cast config values to the appropriate types
     cfg = Box(wandb.config.get('cfg'))
+    if not cfg.wandb.online:
+        os.environ["WANDB_MODE"] = "offline"  # Run wandb offline
     cfg.dataset.fold = int(wandb.config.get('fold', '1'))  # Convert fold to int
     cfg.opt.weights = list(wandb.config.get('classes_weights'))
     cfg.opt.lr = float(wandb.config.get('lr', '0.001'))  # Convert lr to float
     cfg.opt.es_patience = int(wandb.config.get('es_patience', '7'))  # Convert es_patience to int
     cfg.opt.lr_patience = int(wandb.config.get('lr_patience', '3'))  # Convert lr_patience to int
+    cfg.model.encoder_name = str(wandb.config.get('encoder_names'))  # Convert lr_patience to int
+
+    summary_dict = {'maximize':"max", "minimize":'min'}
+    wandb.define_metric(cfg.opt.metric_name, summary=summary_dict[cfg.opt.metric_goal]+',last')
 
     # Generate a unique timestamp for this training run
     now = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
@@ -84,8 +90,7 @@ def train():
     fold = int(wandb.config.get('fold', '1'))  # Ensure fold is an integer
 
     model_dir = os.path.join(wandb.config.get('project_name'), sweep_name, cfg.model.name, cfg.model.encoder_name,
-                             f"fold_{fold}",
-                             cfg.model.exp_name + f'_w_{cfg.opt.weights[0]}_{cfg.opt.weights[1]}_{cfg.opt.weights[2]}' + "_" + now,
+                             f"fold_{fold}", cfg.model.exp_name + f'_w_{cfg.opt.weights[0]}_{cfg.opt.weights[1]}_{cfg.opt.weights[2]}' + "_" + now,
                              run.name)
 
     #### INSTANTIATE MODEL ###
@@ -161,7 +166,8 @@ def train():
                                         scheduler=scheduler, early_stopping=early_stopping,
                                         model_name=cfg.model.name, out_dir=model_dir,
                                         device=device,
-                                        num_epochs=int(wandb.config.get('epochs', '10')))  # Ensure epochs is an int
+                                        num_epochs=int(wandb.config.get('epochs', '10')),
+                                        metric_goal=cfg.opt.metric_goal)  # Ensure epochs is an int
 
 
 if __name__ == "__main__":
