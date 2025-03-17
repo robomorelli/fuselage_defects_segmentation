@@ -47,6 +47,7 @@ def select_gpus(n=2):
     sorted_gpus = sorted(gpu_info, key=lambda x: x[2], reverse=True)  # Sort by free memory
 
     # Select the top N GPUs
+    print(sorted_gpus, n)
     selected_gpus = [gpu[0] for gpu in sorted_gpus[:n]]  # Select the top N GPUs
 
     print(f"Selected GPUs based on memory: {selected_gpus}")
@@ -61,12 +62,13 @@ def train():
     else:
         run = wandb.init()
 
+    # Explicitly cast config values to the appropriate types
     cfg = Box(wandb.config.get('cfg'))
-    cfg.dataset.fold = wandb.config.get('fold', 1)
-    cfg.opt.weights = wandb.config.get('classes_weights')
-    cfg.opt.lr = wandb.config.get('lr')
-    cfg.opt.es_patience = wandb.config.get('es_patience', '7')
-    cfg.opt.lr_patience = wandb.config.get('lr_patience', '3')
+    cfg.dataset.fold = int(wandb.config.get('fold', '1'))  # Convert fold to int
+    cfg.opt.weights = list(wandb.config.get('classes_weights'))
+    cfg.opt.lr = float(wandb.config.get('lr', '0.001'))  # Convert lr to float
+    cfg.opt.es_patience = int(wandb.config.get('es_patience', '7'))  # Convert es_patience to int
+    cfg.opt.lr_patience = int(wandb.config.get('lr_patience', '3'))  # Convert lr_patience to int
 
     # Generate a unique timestamp for this training run
     now = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
@@ -79,11 +81,11 @@ def train():
     sweep = api.sweep(f"{entity}/{project}/{sweep_id}")
     sweep_name = sweep.name  # Retrieve the sweep name
 
-    fold = wandb.config.get('fold', '1')  # Default batch size if not in config
+    fold = int(wandb.config.get('fold', '1'))  # Ensure fold is an integer
 
     model_dir = os.path.join(wandb.config.get('project_name'), sweep_name, cfg.model.name, cfg.model.encoder_name,
                              f"fold_{fold}",
-                             cfg.model.exp_name + f'_w_{cfg.opt.weight[0]}_{cfg.opt.weight[1]}_{cfg.opt.weight[2]}' + "_" + now,
+                             cfg.model.exp_name + f'_w_{cfg.opt.weights[0]}_{cfg.opt.weights[1]}_{cfg.opt.weights[2]}' + "_" + now,
                              run.name)
 
     #### INSTANTIATE MODEL ###
@@ -92,11 +94,13 @@ def train():
     # Get an environment variable for device selection (if provided)
     device_env = os.getenv("GPU_ID")
     if device_env:
+        device_env = int(device_env)  # Convert GPU_ID to an integer
         device = f"cuda:{device_env}"
         model = model.to(device)  # Move model to first selected GPU
     else:
         # Select the N GPUs with the least load (top N)
-        n_gpus = wandb.config.get('devices', 1)  # You can change N to the desired number of GPUs
+        n_gpus = int(wandb.config.get('devices', '1'))  # Convert devices to integer
+        print(f'gpu numbers {n_gpus}')
         selected_gpus = select_gpus(n=n_gpus)
         # Convert selected GPUs into a format suitable for PyTorch DataParallel
         device_ids = selected_gpus
@@ -111,14 +115,14 @@ def train():
         device = f"cuda:{device_ids[0]}"  # Set the device to the first GPU for criterion and other tasks
 
     # Configure CPU threading
-    ncpus = int(wandb.config.get('ncpus', 0))
+    ncpus = int(wandb.config.get('ncpus', '0'))  # Ensure ncpus is an integer
     if ncpus == 0:
         ncpus = int(device[-2]) * 12
     torch.set_num_threads(ncpus)
     num_workers = ncpus
 
     # Adjust batch size based on the number of GPUs
-    batch_size = wandb.config.get('batch', 12) * n_gpus  # Default batch size if not in config
+    batch_size = int(wandb.config.get('batch', '12')) * n_gpus  # Convert batch to int and adjust based on GPUs
 
     os.environ["OMP_NUM_THREADS"] = str(ncpus)
     os.environ["MKL_NUM_THREADS"] = str(ncpus)
@@ -156,7 +160,8 @@ def train():
                                         criterion=criterion, optimizer=optimizer,
                                         scheduler=scheduler, early_stopping=early_stopping,
                                         model_name=cfg.model.name, out_dir=model_dir,
-                                        device=device, num_epochs=wandb.config.get('epochs'))
+                                        device=device,
+                                        num_epochs=int(wandb.config.get('epochs', '10')))  # Ensure epochs is an int
 
 
 if __name__ == "__main__":

@@ -19,5 +19,9 @@ parameters:
       values: [3, 5]
   es_patience:
     values: [7, 10]
+  ngpus:
+    values: 1
+  ncpus:
+    values: 6
 program:
   train.py
