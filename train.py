@@ -104,16 +104,18 @@ def train():
         model = model.to(device)  # Move model to first selected GPU
     else:
         # Select the N GPUs with the least load (top N)
-        n_gpus = int(wandb.config.get('devices', '1'))  # Convert devices to integer
+        n_gpus = int(wandb.config.get('n_gpus', '1'))  # Convert devices to integer
         print(f'gpu numbers {n_gpus}')
         selected_gpus = select_gpus(n=n_gpus)
         # Convert selected GPUs into a format suitable for PyTorch DataParallel
-        device_ids = selected_gpus
+        #device_ids = selected_gpus
+        device_ids = list(range(0, n_gpus))
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, device_ids))
 
         # If using multiple GPUs, use DataParallel
         if len(device_ids) > 1:
             print(f"Using GPUs {device_ids} for training")
+            model = model.to(device_ids[0])
             model = torch.nn.DataParallel(model, device_ids=device_ids)
         else:
             model = model.to(f"cuda:{device_ids[0]}")  # Move model to first selected GPU

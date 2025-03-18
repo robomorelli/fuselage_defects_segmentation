@@ -38,7 +38,7 @@ def main(args):
 
     # Initialize the sweep
     # project is the name on wandb API
-    if args.sweep_id is not None:
+    if args.sweep_id is not None and args.sweep_id != "None":
         # Define the bash command
         #command = f"wandb agent robmorelli/segformer_hyp_opt_dv/exwq6fq6"
         command = f"wandb agent -p {args.project_name} -e {args.entity} {args.sweep_id}"

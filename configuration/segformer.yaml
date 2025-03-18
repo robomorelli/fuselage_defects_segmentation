@@ -1,5 +1,5 @@
 wandb:
-  online: 1
+  online: 0
 
 dataset:
   data_path: "./data/cropped_data/"
