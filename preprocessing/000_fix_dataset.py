@@ -75,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument("--full_size_images_path", default=data_images_path, help="")
     parser.add_argument("--generate_black_masks", default=1, help="")
     parser.add_argument("--merge_images_folder", default='./images_to_merge.txt', help="")
+    parser.add_argument("--add_new_class", default='./data/raw_masks_drill_start', help="")
 
     args = parser.parse_args()
     main(args)
