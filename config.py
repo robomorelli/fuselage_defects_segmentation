@@ -149,7 +149,7 @@ images_2_wave_path = os.path.join(root, 'data/images_2_wave')
 IMG_WIDTH = 4096
 IMG_HEIGHT = 3000
 
-num_classes = 2
+num_classes = 3
 
 custom_list = ["0000_label_iSVx22hl.png", "0000_label_KhubE3m1.png", "0000_label_lY40XnMe.png"
                ,"0000_label_Pe712dpb.png", "0000_label_uCXpTeJJ.png", "0000_label_UdQfh0C1.png"

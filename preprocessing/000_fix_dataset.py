@@ -1,20 +1,22 @@
 import os.path
 import shutil
+
+import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import argparse
 from pathlib import Path
 from PIL import Image
-from skimage.morphology import remove_small_holes, remove_small_objects
+from tqdm import tqdm
 from config import *
 
 # Function to keep one of the masks for tha same image
 
 
 # Function to merge 2 images and keep only one of them with only one name
-def merge_images_masks(merge_images_txt_folder_path, full_size_images_path, full_size_masks_path, keep_first=True):
+def merge_images_masks(merge_images_txt_path, full_size_images_path, full_size_masks_path, keep_first=True):
 
-    with open(merge_images_txt_folder_path, 'r') as file:
+    with open(merge_images_txt_path, 'r') as file:
         lines = file.readlines()
         lines = [line.strip() for line in lines]
 
@@ -42,6 +44,82 @@ def merge_images_masks(merge_images_txt_folder_path, full_size_images_path, full
                 os.remove(ifh1)
                 cv2.imwrite(mfh2, m)
 
+
+def add_new_class(new_class_masks_path, original_masks_path, test_path=None, force_recreate=True):
+    """
+    Adds new class masks from `new_class_masks_path` to the masks in `full_size_masks_path` if the class ID doesn't already exist.
+
+    Args:
+        new_class_masks_path (str): Path to the new class masks.
+        original_masks_path (str): Path to the original masks where the new class will be added.
+        test_path (str, optional): Path to save the updated masks for testing purposes. If None, it doesn't save. Defaults to None.
+    """
+    if test_path is not None:
+        os.makedirs(test_path, exist_ok=True)
+        output_path = test_path
+    else:
+        output_path = original_masks_path
+
+    # Get the list of mask filenames in both directories
+    new_class_mask_files = os.listdir(new_class_masks_path)
+    missing_masks = []
+    # Iterate through the new class masks
+    for new_mask_file in tqdm(new_class_mask_files):
+        print(new_mask_file)
+        new_mask_path = os.path.join(new_class_masks_path, new_mask_file)
+        new_mask = np.squeeze(cv2.imread(new_mask_path, cv2.IMREAD_UNCHANGED)[:,:,0:1])
+        original_mask_path = os.path.join(original_masks_path, new_mask_file)
+        original_mask = cv2.imread(original_mask_path, cv2.IMREAD_UNCHANGED)
+
+        try:
+            if original_mask is None:  # Check if the image was successfully loaded
+                print(f'Original mask not existing: {new_mask_file}')
+                raise FileNotFoundError
+        except:
+            original_mask = np.zeros_like(new_mask)
+            missing_masks.append(new_mask_file)
+
+        if len(original_mask.shape)>2:
+            original_mask = np.squeeze(original_mask[:,:,0:1])
+
+        #new_mask[new_mask == 255] = 0
+        #original_mask[original_mask == 255] = 0
+        unique_values1 = np.unique(new_mask)
+        unique_values2 = np.unique(original_mask)
+        unique_values1 = unique_values1[unique_values1 != 0]
+        unique_values2 = unique_values2[unique_values2 != 0]
+        if np.intersect1d(unique_values1, unique_values2):
+            print(f'new class already present in {new_mask_file}')
+            if force_recreate:
+                for id in unique_values2:
+                    original_mask[original_mask==id] = 0
+            else:
+                continue
+
+        # Ensure the new mask has the same size as the original
+        if original_mask.shape != new_mask.shape:
+            raise ValueError(
+                f"Mask shape mismatch: {original_mask.shape} and {new_mask.shape} do not match for {new_mask_file}.")
+
+        # Add the new mask to the original mask
+        original_mask = np.maximum(original_mask, new_mask)
+
+        # If test_path is provided, save a copy of the updated mask to the test path
+        cv2.imwrite(os.path.join(output_path, new_mask_file), original_mask)
+        print(f"Saved updated mask to test folder: {output_path}")
+
+    # Save missing images to a text file
+    if missing_masks:
+        missing_file_path = os.path.join(Path(output_path).parent.as_posix(), "missing_masks.txt")
+        with open(missing_file_path, "w") as f:
+            for image_name in missing_masks:
+                f.write(image_name + "\n")
+
+        print(f"Missing image names saved to {missing_file_path}")
+    print("Process completed.")
+
+
+
 # Function to create black mask for not annotated images (Actually done  during the crop and only for the crop not for full size images)
 def generate_black_masks(full_size_images_path, full_size_masks_path):
 
@@ -66,16 +144,22 @@ def main(args):
 
     if args.generate_black_masks:
         generate_black_masks(full_size_images_path, full_size_masks_path)
-    if args.merge_images_folder is not None:
-        merge_images_masks(args.merge_images_folder, full_size_images_path, full_size_masks_path, keep_first=True)
+    if args.merge_images_path is not None:
+        merge_images_masks(args.merge_images_path, full_size_images_path, full_size_masks_path, keep_first=True)
+    if args.new_class_path is not None:
+        add_new_class(args.new_class_path, args.original_class_path, args.test_path, force_recreate=args.force_recreate)
+
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     parser.add_argument("--full_size_images_path", default=data_images_path, help="")
-    parser.add_argument("--generate_black_masks", default=1, help="")
-    parser.add_argument("--merge_images_folder", default='./images_to_merge.txt', help="")
-    parser.add_argument("--add_new_class", default='./data/raw_masks_drill_start', help="")
+    parser.add_argument("--generate_black_masks", default=0, help="")
+    parser.add_argument("--merge_images_path", default=None, help="./images_to_merge.txt - is the folder including txt of images name to merge")
+    parser.add_argument("--original_class_path", default=data_masks_path, help="")
+    parser.add_argument("--new_class_path", default='../data/raw_masks_drill_start', help="")
+    parser.add_argument("--test_path", default=None, help="")
+    parser.add_argument("--force_recreate", default=1, help="")
 
     args = parser.parse_args()
     main(args)
