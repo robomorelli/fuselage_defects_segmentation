@@ -8,6 +8,7 @@ from box import Box
 from utils.training import load_model, create_dataloader
 from config import *
 import subprocess
+import numpy as np
 
 def get_gpu_memory():
     """
@@ -68,7 +69,7 @@ def train():
         os.environ["WANDB_MODE"] = "offline"  # Run wandb offline
     cfg.dataset.fold = int(wandb.config.get('fold', '1'))  # Convert fold to int
     cfg.opt.weights = list(wandb.config.get('classes_weights'))
-    cfg.opt.lr = float(wandb.config.get('lr', '0.001'))  # Convert lr to float
+    cfg.opt.lr = float(wandb.config.get('lr', '0.0003'))  # Convert lr to float
     cfg.opt.es_patience = int(wandb.config.get('es_patience', '7'))  # Convert es_patience to int
     cfg.opt.lr_patience = int(wandb.config.get('lr_patience', '3'))  # Convert lr_patience to int
     cfg.model.encoder_name = str(wandb.config.get('encoder_names'))  # Convert lr_patience to int
@@ -101,15 +102,16 @@ def train():
     if device_env:
         device_env = int(device_env)  # Convert GPU_ID to an integer
         device = f"cuda:{device_env}"
+        print(f"device {device}")
         model = model.to(device)  # Move model to first selected GPU
     else:
         # Select the N GPUs with the least load (top N)
-        n_gpus = int(wandb.config.get('n_gpus', '1'))  # Convert devices to integer
+        n_gpus = int(wandb.config.get('ngpus'))  # Convert devices to integer
         print(f'gpu numbers {n_gpus}')
         selected_gpus = select_gpus(n=n_gpus)
         # Convert selected GPUs into a format suitable for PyTorch DataParallel
-        #device_ids = selected_gpus
-        device_ids = list(range(0, n_gpus))
+        device_ids = selected_gpus
+        #device_ids = list(range(0, n_gpus))
         os.environ["CUDA_VISIBLE_DEVICES"] = ",".join(map(str, device_ids))
 
         # If using multiple GPUs, use DataParallel
@@ -118,6 +120,7 @@ def train():
             model = model.to(device_ids[0])
             model = torch.nn.DataParallel(model, device_ids=device_ids)
         else:
+            print(f"device_ids {device_ids}")
             model = model.to(f"cuda:{device_ids[0]}")  # Move model to first selected GPU
         device = f"cuda:{device_ids[0]}"  # Set the device to the first GPU for criterion and other tasks
 

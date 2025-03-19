@@ -39,6 +39,7 @@ def main(args):
     # Initialize the sweep
     # project is the name on wandb API
     if args.sweep_id is not None and args.sweep_id != "None":
+        print(f'sweep id {args.sweep_id}')
         # Define the bash command
         #command = f"wandb agent robmorelli/segformer_hyp_opt_dv/exwq6fq6"
         command = f"wandb agent -p {args.project_name} -e {args.entity} {args.sweep_id}"
@@ -55,10 +56,10 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run YOLO sweep with wandb")
     parser.add_argument("--entity", default='robmorelli', help="Dataset configuration file (YAML)")
-    parser.add_argument("--project_name", default='segformer_hyp_opt_zbook', help="Dataset configuration file (YAML)")
+    parser.add_argument("--project_name", default='segformer_hyp_opt_test', help="Dataset configuration file (YAML)")
     parser.add_argument("--conf_yaml", default='segformer', help="Dataset configuration file (YAML)")
     parser.add_argument("--sweep_cfg", default='sweep', help="Sweep configuration file (YAML)")
-    parser.add_argument("--ngpus", default=1, help="")
+    parser.add_argument("--ngpus", default=2, help="")
     parser.add_argument("--ncpus", default=6, help="")
     parser.add_argument("--exps_num", default=10, help="")
     parser.add_argument("--group", default=None, help="")
