@@ -2,7 +2,7 @@ wandb:
   online: 0
 
 dataset:
-  data_path: "./data/cropped_data/"
+  data_path: "./data/cropped_data_bkp/"
   random_seed: 123
   shuffle: 1
   fold: 1       # change to switch folder for training
@@ -25,7 +25,7 @@ opt:
   epochs: 200
   num_workers: 24
   logit_loss: 0
-  weights: [1, 1.1, 1]
+  weights: [1, 1.1, 1, 2]
   from_last_to_unfreeze: 10000
   save_each_epoch: 0
   crossentropy_loss: 1

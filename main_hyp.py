@@ -55,7 +55,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run YOLO sweep with wandb")
     parser.add_argument("--entity", default='robmorelli', help="Dataset configuration file (YAML)")
-    parser.add_argument("--project_name", default='segformer_hyp_opt_zbook', help="Dataset configuration file (YAML)")
+    parser.add_argument("--project_name", default='segformer_hyp_opt_dv_3_classes_test', help="Dataset configuration file (YAML)")
     parser.add_argument("--conf_yaml", default='segformer', help="Dataset configuration file (YAML)")
     parser.add_argument("--sweep_cfg", default='sweep', help="Sweep configuration file (YAML)")
     parser.add_argument("--ngpus", default=1, help="")

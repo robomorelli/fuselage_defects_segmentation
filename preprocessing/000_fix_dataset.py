@@ -150,7 +150,6 @@ def main(args):
         add_new_class(args.new_class_path, args.original_class_path, args.test_path, force_recreate=args.force_recreate)
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Generate segmentation masks")
     parser.add_argument("--full_size_images_path", default=data_images_path, help="")
@@ -159,7 +158,8 @@ if __name__ == '__main__':
     parser.add_argument("--original_class_path", default=data_masks_path, help="")
     parser.add_argument("--new_class_path", default='../data/raw_masks_drill_start', help="")
     parser.add_argument("--test_path", default=None, help="")
-    parser.add_argument("--force_recreate", default=1, help="")
+    parser.add_argument("--force_recreate", default=0, help="")
+    #parser.add_argument("--remove_class", default=None, help="")
 
     args = parser.parse_args()
     main(args)

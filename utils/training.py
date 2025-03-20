@@ -138,6 +138,8 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                 labels = masks.to(device)
 
                 outputs = model(pixel_values=pixel_values, labels=labels.long()).logits
+                print(f"Has nan {torch.isnan(labels).any()} has Nan {torch.isnan(outputs).any()}")
+                print(f"Has nan {np.unique(labels.detach().cpu())} has Nan {np.unique(outputs.detach().cpu())}")
                 upsampled_logits = nn.functional.interpolate(
                     outputs,
                     size=tuple(inputs.shape[-2:]),

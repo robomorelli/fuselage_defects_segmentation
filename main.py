@@ -17,7 +17,7 @@ from transformers import (
     SegformerImageProcessor)
 import torch
 import torch.optim
-from utils.training import training_cycle, training_cycle_deeplab, training_cycle_deeplab_multiclass, training_cycle_segformer_multiclass
+from utils.training import training_cycle_segformer_multiclass
 from utils.opt import EarlyStopping
 import yaml
 import json

@@ -6,11 +6,11 @@ parameters:
   batch:
     values: [2]
   encoder_names:
-    values: ["nvidia/mit-b5"]
+    values: ["nvidia/mit-b1", "nvidia/mit-b3", "nvidia/mit-b5"]
   unfreeze:
     values: [1, 10, 50, 1000]
   classes_weights:
-    values: [[1,1,1], [1.1,1,1], [1,1.1,1], [1,1,1.1]]
+    values: [[1,1,1, 1.8], [1.1,1,1, 2], [1,1.1,1, 2.5], [1,1,1.1, 2.2]]
   lr:
     values: [ 0.0001, 0.0003, 0.0001, 0.0003 ]
   lr_patience:

@@ -42,7 +42,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     image_files = os.listdir(image_path)
     mask_files = [x.replace('.', '_mask.') for x in image_files]
 
-    cropped_image_files = os.listdir(os.path.join(Path(image_path).parent.as_posix(), 'cropped_data/images'))
+    cropped_image_files = os.listdir(os.path.join(Path(image_path).parent.as_posix(), 'cropped_data_bkp/images'))
     cropped_masks_files = [x.replace('.', '_mask.') for x in cropped_image_files]
 
     if oversampling_file_path is not None:
