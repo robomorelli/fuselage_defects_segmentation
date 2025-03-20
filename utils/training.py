@@ -221,6 +221,8 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                     'val_loss_history': val_losses,
                 }, os.path.join(out_dir, f'{model_name}.pth'))
 
+                save_checkpoint_wandb()
+
     wandb.finish()
 
 
@@ -581,11 +583,25 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
 
 
 
-def on_fit_epoch_end(trainer, time_str):
+def on_fit_epoch_end(trainer, save_model=False, path="model_epoch.pth"):
     """Callback to rename files after training ends."""
     # Get the directory where the model saves files
     #model_dir = trainer.save_dir  # The directory where best.pt and last.pt are saved
     #rename_model_files(model_dir, time_str)
     wandb.log({#**trainer.lr,
                **trainer.metrics})
+
+    if save_model:
+        # Upload checkpoint to W&B
+        artifact = wandb.Artifact(f"model", type="model")
+        artifact.add_file(path)
+        wandb.log_artifact(artifact)
+
+
+def save_checkpoint_wandb(path="model_epoch.pth"):
+
+    # Upload checkpoint to W&B
+    artifact = wandb.Artifact(f"model", type="model")
+    artifact.add_file(path)
+    wandb.log_artifact(artifact)
 
