@@ -159,7 +159,7 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
 
             train_loss_epoch = running_loss / len(train_loader)
             train_iou_epoch = (running_iou / len(train_loader)).cpu().tolist()
-            train_iou_mean_epoch = running_iou_mean / len(val_loader)
+            train_iou_mean_epoch = running_iou_mean / len(train_loader)
 
             train_losses.append(train_loss_epoch)
 
