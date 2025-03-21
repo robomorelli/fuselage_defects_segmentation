@@ -1,8 +1,8 @@
 wandb:
-  online: 0
+  online: 1
 
 dataset:
-  data_path: "./data/cropped_data_bkp/"
+  data_path: "./data/cropped_data/"
   random_seed: 123
   shuffle: 1
   fold: 1       # change to switch folder for training
@@ -17,6 +17,7 @@ model:
   encoder_name: 'nvidia/mit-b5'
   exp_name: '1_fold'
   num_classes: 2
+  checkpoint: Null
 
 opt:
   lr: 0.0001

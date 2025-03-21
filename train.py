@@ -1,3 +1,5 @@
+import os.path
+
 import torch
 import torch.optim
 from utils.training import training_cycle_segformer_multiclass
@@ -92,6 +94,8 @@ def train():
     model_dir = os.path.join(wandb.config.get('project_name'), sweep_name, cfg.model.name, cfg.model.encoder_name,
                              f"fold_{fold}", cfg.model.exp_name + f'_w_{cfg.opt.weights[0]}_{cfg.opt.weights[1]}_{cfg.opt.weights[2]}' + "_" + now,
                              run.name)
+
+    cfg.model.checkpoint = os.path.join(model_dir, cfg.model.name + '.pth')
 
     #### INSTANTIATE MODEL ###
     model = load_model(cfg, wandb.config.get('unfreeze'))

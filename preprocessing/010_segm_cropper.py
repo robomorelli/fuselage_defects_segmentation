@@ -31,14 +31,14 @@ def crop_images(args):
     masks_input_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'masks')
     save_bkg_perc = args.save_bkg_perc
     if args.total_background:
-        image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data_bkp/tot_bkg/images')
-        mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_bkp/tot_bkg/masks')
+        image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/images')
+        mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/tot_bkg/masks')
         mask_output_folder_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_viz/tot_bkg/masks')
         mask_output_folder_bboxes_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_bboxes_viz/tot_bkg/masks')
         save_bkg_perc = 1.00
     else:
-        image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data_bkp/images')
-        mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_bkp/masks')
+        image_output_folder = os.path.join(Path(images_input_folder).parent.as_posix(), 'cropped_data/images')
+        mask_output_folder = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data/masks')
         mask_output_folder_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_viz/masks')
         mask_output_folder_bboxes_viz = os.path.join(Path(masks_input_folder).parent.as_posix(), 'cropped_data_bboxes_viz/masks')
     crop_size = args.crop_size  # Adjust this according to your needs

@@ -175,6 +175,8 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                     pixel_values = inputs.to(device)
                     labels = masks.to(device)
 
+                    #print(np.any(np.isnan(pixel_values.detach().cpu())), np.any(np.isnan(labels.detach().cpu())))
+
                     outputs = model(pixel_values=pixel_values, labels=labels.long()).logits
                     upsampled_logits = nn.functional.interpolate(
                         outputs,
@@ -221,7 +223,7 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                     'val_loss_history': val_losses,
                 }, os.path.join(out_dir, f'{model_name}.pth'))
 
-                save_checkpoint_wandb()
+                save_checkpoint_wandb(path=cfg.model.checkpoint)
 
     wandb.finish()
 
@@ -243,11 +245,8 @@ def training_cycle_segformer_multiclass_bkp(cfg, model, train_loader, val_loader
         with tqdm(train_loader, unit="batch") as tepoch:
             for i, (inputs, masks) in enumerate(tepoch):
 
-                #inputs, masks = inputs.to(device), masks.to(device)
                 print(np.unique(masks.cpu()))
 
-                #if 1 in list(np.unique(masks.cpu())) or 2 in list(np.unique(masks.cpu())):
-                #    print('mark or graffio')
 
                 # get the inputs;
                 pixel_values = inputs.to(device)
@@ -582,7 +581,6 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
     return train_dataloader, val_dataloader
 
 
-
 def on_fit_epoch_end(trainer, save_model=False, path="model_epoch.pth"):
     """Callback to rename files after training ends."""
     # Get the directory where the model saves files
@@ -598,7 +596,7 @@ def on_fit_epoch_end(trainer, save_model=False, path="model_epoch.pth"):
         wandb.log_artifact(artifact)
 
 
-def save_checkpoint_wandb(path="model_epoch.pth"):
+def save_checkpoint_wandb(path="model.pth"):
 
     # Upload checkpoint to W&B
     artifact = wandb.Artifact(f"model", type="model")
