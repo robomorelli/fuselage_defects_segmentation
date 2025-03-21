@@ -119,13 +119,14 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
     # Initialize IoU metric for all classes
     num_classes = cfg.model.num_classes  # Ensure num_classes is correctly defined
     iou_metric = JaccardIndex(task="multiclass", num_classes=num_classes+1, average="none").to(device)  # No averaging for per-class IoU
+    iou_metric_mean = JaccardIndex(task="multiclass", num_classes=num_classes + 1).to(device)
 
     val_loss = float('inf')
     train_losses, val_losses = [], []
 
     for epoch in range(num_epochs):
         model.train()
-        running_loss, running_iou = 0.0, torch.zeros(num_classes+1, device=device)
+        running_loss, running_iou_mean, running_iou = 0.0, 0.0, torch.zeros(num_classes+1, device=device)
 
         with tqdm(train_loader, unit="batch") as tepoch:
             for i, (inputs, masks) in enumerate(tepoch):
@@ -148,19 +149,24 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
 
                 preds = torch.argmax(upsampled_logits, dim=1)
                 iou_scores = iou_metric(preds, labels.squeeze(1))  # Get per-class IoU
+                iou_score_mean = iou_metric_mean(preds, labels.squeeze(1))
 
                 running_loss += loss.item()
                 running_iou += iou_scores
+                running_iou_mean += iou_score_mean.item()
 
                 tepoch.set_postfix(loss=running_loss / (i + 1), iou=(running_iou / (i + 1)).mean().item())
 
             train_loss_epoch = running_loss / len(train_loader)
             train_iou_epoch = (running_iou / len(train_loader)).cpu().tolist()
+            train_iou_mean_epoch = running_iou_mean / len(val_loader)
+
             train_losses.append(train_loss_epoch)
 
             # Log to W&B
             wandb.log({
                 "Train Loss": train_loss_epoch,
+                "Train IoU": train_iou_mean_epoch,
                 "Train IoU Mean": sum(train_iou_epoch) / len(train_iou_epoch),  # Mean IoU
                 **{f"Train IoU Class {c}": train_iou_epoch[c] for c in range(num_classes+1)},
                 "Epoch": epoch
@@ -168,7 +174,7 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
 
         # Validation
         model.eval()
-        running_loss, running_iou = 0.0, torch.zeros(num_classes+1, device=device)
+        running_loss, running_iou_mean, running_iou,  = 0.0, 0.0, torch.zeros(num_classes+1, device=device)
 
         with torch.no_grad():
             with tqdm(val_loader, unit="batch") as vepoch:
@@ -187,18 +193,27 @@ def training_cycle_segformer_multiclass(cfg, model, train_loader, val_loader, cr
                     loss = criterion(upsampled_logits.float(), labels.squeeze(1).long())
                     preds = torch.argmax(upsampled_logits, dim=1)
                     iou_scores = iou_metric(preds, labels.squeeze(1))  # Per-class IoU
+                    iou_score_mean = iou_metric_mean(preds, labels.squeeze(1))
+
+                    ########
+
+                    ###########
 
                     running_loss += loss.item()
                     running_iou += iou_scores
+                    running_iou_mean += iou_score_mean.item()
 
                     vepoch.set_postfix(loss=running_loss / (i + 1), iou=(running_iou / (i + 1)).mean().item())
 
                 val_loss_epoch = running_loss / len(val_loader)
                 val_iou_epoch = (running_iou / len(val_loader)).cpu().tolist()
+                val_iou_mean_epoch = running_iou_mean / len(val_loader)
                 val_losses.append(val_loss_epoch)
 
 
-                wandb.log({"Validation Loss": val_loss_epoch, "Validation IoU": val_iou_epoch,
+                wandb.log({"Validation Loss": val_loss_epoch,
+                           "Validation IoU": val_iou_mean_epoch,
+                            "Validation IoU Mean": sum(val_iou_epoch) / len(val_iou_epoch),  # Mean IoU
                            **{f"Validation IoU Class {c}": val_iou_epoch[c] for c in range(num_classes+1)},
                     "Epoch": epoch})
 
