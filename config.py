@@ -18,6 +18,7 @@ config_folder = os.path.join(root,'configuration')
 
 # Train data path
 data_path = os.path.join(root,'data')
+all_images_path = os.path.join(root,'data/all_images')
 masks_viz_path = os.path.join(root,'data/visualization')
 full_size_masks_classes_path = os.path.join(root,'data/masks_classes')
 cropped_data_path = os.path.join(root,'data/cropped_data')
