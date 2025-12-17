@@ -14,7 +14,7 @@ from albumentations import (RandomCrop, CenterCrop, ElasticTransform, RGBShift, 
                             Transpose,
                             ShiftScaleRotate, OpticalDistortion, GridDistortion, RandomBrightnessContrast, VerticalFlip,
                             HorizontalFlip,
-                            HueSaturationValue,
+                            HueSaturationValue, CLAHE, ImageCompression
                             )
 from transformers import (
     SegformerForSemanticSegmentation,
@@ -518,7 +518,11 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
                  A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.5, p=0.5),
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
-                 Blur(blur_limit=19, p=0.35),
+                 Blur(blur_limit=19, p=0.40),
+                 A.CLAHE(clip_limit=1.5, tile_grid_size=(8,8), p = 0.10),
+                 A.GaussianBlur(blur_limit=(3,9), sigma_limit=(0.2, 1.5), p=0.25),
+                 A.ImageCompression(quality_lower=60, quality_upper=85, p=0.15),
+
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'}
             )
@@ -538,7 +542,10 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
                  A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.5, p=0.5),
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
-                 Blur(blur_limit=19, p=0.3),
+                 Blur(blur_limit=19, p=0.45),
+                 A.CLAHE(clip_limit=1.5, tile_grid_size=(8, 8), p=0.10),
+                 A.GaussianBlur(blur_limit=(3, 9), sigma_limit=(0.2, 1.5), p=0.25),
+                 A.ImageCompression(quality_lower=60, quality_upper=85, p=0.15),
                  A.Normalize(mean=mean, std=std),
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'})
@@ -554,6 +561,9 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
                  Blur(blur_limit=19, p=0.3),
+                 A.CLAHE(clip_limit=1.5, tile_grid_size=(8, 8), p=0.10),
+                 A.GaussianBlur(blur_limit=(3, 9), sigma_limit=(0.2, 1.5), p=0.25),
+                 A.ImageCompression(quality_lower=60, quality_upper=85, p=0.15),
                  ToTensorV2(),
                  ], additional_targets={'mask':'mask'}
             )
@@ -572,6 +582,9 @@ def create_dataloader(cfg, batch_size=8, num_workers=0):
                  A.VerticalFlip(p=0.2),
                  A.HorizontalFlip(p=0.2),
                  Blur(blur_limit=15, p=0.3),
+                 A.CLAHE(clip_limit=1.5, tile_grid_size=(8, 8), p=0.10),
+                 A.GaussianBlur(blur_limit=(3, 9), sigma_limit=(0.2, 1.5), p=0.25),
+                 A.ImageCompression(quality_lower=60, quality_upper=85, p=0.15),
                  A.Normalize(mean=mean, std=std),
                  ToTensorV2(),
                  ], additional_targets={'mask': 'mask'}
