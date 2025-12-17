@@ -13,7 +13,7 @@ sys.path.append('..')
 from pathlib import Path
 from config import *
 
-def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
+def main(args):
     """
     Split images and masks into train, validation, and test1 sets and copy them to the output directory.
 
@@ -26,12 +26,15 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     seed: Random seed for reproducibility.
     """
     # Set random seed for reproducibility
+    seed = args.seed
+    src_data_path = args.data_path
+
     random.seed(seed, version=2)
 
-    image_path = os.path.join(data_path, 'images')
+    image_path = os.path.join(src_data_path, 'images')
     oversampling_file_path = args.oversampling_file
 
-    output_dir = os.path.join(data_path, 'k-fold')
+    output_dir = os.path.join(src_data_path, 'k-fold')
     if args.start_from_scratch:
         if os.path.exists(output_dir):
             shutil.rmtree(output_dir)
@@ -43,7 +46,8 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     image_files = os.listdir(image_path)
     mask_files = [x.replace('.', '_mask.') for x in image_files]
 
-    cropped_image_files = os.listdir(os.path.join(Path(image_path).parent.as_posix(), 'cropped_data/images'))
+    cropped_image_files = os.listdir(os.path.join(Path(image_path).parent.as_posix(),
+                                                  'cropped_data/images'))
 
     if oversampling_file_path is not None:
         oversamplig_file_names = list(pd.read_excel(oversampling_file_path)['name'].values)
@@ -57,7 +61,7 @@ def main(data_path, n_splits=3, val_ratio=0.15, seed=123, start_from_scratch=1):
     # Combine image and mask filenames
     data = list(zip(image_files, mask_files))
     # Create output directories
-    for i in range(n_splits):
+    for i in range(args.n_splits):
         split_dir = os.path.join(output_dir,  f'fold_{i+1}')
         os.makedirs(split_dir, exist_ok=True)
 
@@ -246,8 +250,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Crop image and update annotation")
 
     parser.add_argument("--data_path", default=data_path, help="Path to the input image")
-    parser.add_argument("--n_splits", type=int, default=3, help="Patch size for extraction")
-    parser.add_argument("--val_ratio", type=int, default=0.1, help="Patch size for extraction")
+    parser.add_argument("--n_splits", type=int, default=5, help="Patch size for extraction")
+    parser.add_argument("--val_ratio", type=int, default=0.09, help="Patch size for extraction")
     parser.add_argument("--fix_val_ratio", type=int, default=1, help="Patch size for extraction")
     parser.add_argument("--seed", type=int, default=123, help="Patch size for extraction")
     parser.add_argument("--start_from_scratch", type=int, default=1, help="Patch size for extraction")
@@ -255,4 +259,4 @@ if __name__ == "__main__":
     parser.add_argument("--oversampling_file", type=str, default='./oversampling.xlsx', help="")
     args = parser.parse_args()
 
-    main(args.data_path, args.n_splits, args.val_ratio, args.seed, args.start_from_scratch)
+    main(args)
