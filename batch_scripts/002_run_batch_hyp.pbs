@@ -16,10 +16,10 @@ echo "entity": robmorelli
 echo "sweep_cfg": sweep
 echo "num ngpus": 1
 echo "num ncpus": 12
-echo "project_name": segformer_hyp_opt_dv_3_classes_lightmodel
+echo "project_name": segformer_hyp_opt_one_shot_2
 echo "group": None
-echo "exps_num": 60
-echo "sweep_id": 105uvrpe
+echo "exps_num": 1
+echo "sweep_id": None
 
 module load proxy/proxy_20
 
@@ -27,4 +27,4 @@ source $HOME/.bashrc
 cd /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation
 
 conda activate flai
-python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/main_hyp.py --entity robmorelli --project_name segformer_hyp_opt_dv_3_classes_lightmodel --sweep_cfg sweep --ngpus 1 --ncpus 12 --exps_num 60 --group None --sweep_id 105uvrpe
+python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/main_hyp.py --entity robmorelli --project_name segformer_hyp_opt_one_shot_2 --sweep_cfg sweep --ngpus 1 --ncpus 12 --exps_num 1 --group None --sweep_id None
