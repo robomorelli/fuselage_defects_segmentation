@@ -313,220 +313,49 @@ class SegmentationModelFactory:
 
     def _build_mask2former(self):
         """
-        Build Mask2Former from scratch (no pretrained head).
-        Only backbone is pretrained.
+        Build Mask2Former using official MMSeg configs.
         """
-        print(f"✅ Building Mask2Former from scratch with backbone: {self.backbone}")
+        print(f"✅ Building Mask2Former with backbone: {self.backbone}")
 
         class_weights = self._get_class_weights()
         weights_to_use = class_weights if class_weights else [1.0] * self.num_classes
 
-        crop_h, crop_w = (self.crop_size, self.crop_size) if isinstance(self.crop_size, int) else self.crop_size
-
-        # Get backbone config based on backbone type
-        if self.backbone == "resnet50":
-            backbone_cfg = dict(
-                type='ResNetV1c',
-                depth=50,
-                num_stages=4,
-                out_indices=(0, 1, 2, 3),
-                dilations=(1, 1, 1, 1),
-                strides=(1, 2, 2, 2),
-                norm_cfg=dict(type='SyncBN', requires_grad=True),
-                norm_eval=False,
-                style='pytorch',
-                init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet50')
-            )
-            in_channels = [256, 512, 1024, 2048]
-
-        elif self.backbone == "resnet101":
-            backbone_cfg = dict(
-                type='ResNetV1c',
-                depth=101,
-                num_stages=4,
-                out_indices=(0, 1, 2, 3),
-                dilations=(1, 1, 1, 1),
-                strides=(1, 2, 2, 2),
-                norm_cfg=dict(type='SyncBN', requires_grad=True),
-                norm_eval=False,
-                style='pytorch',
-                init_cfg=dict(type='Pretrained', checkpoint='torchvision://resnet101')
-            )
-            in_channels = [256, 512, 1024, 2048]
-
-        elif self.backbone == "swin_tiny":
-            backbone_cfg = dict(
-                type='SwinTransformer',
-                embed_dims=96,
-                depths=[2, 2, 6, 2],
-                num_heads=[3, 6, 12, 24],
-                window_size=7,
-                mlp_ratio=4,
-                qkv_bias=True,
-                qk_scale=None,
-                drop_rate=0.,
-                attn_drop_rate=0.,
-                drop_path_rate=0.3,
-                patch_norm=True,
-                out_indices=(0, 1, 2, 3),
-                with_cp=False,
-
-                init_cfg=dict(type='Pretrained',
-                              checkpoint='https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_tiny_patch4_window7_224_20220317-1cdeb081.pth')
-            )
-            in_channels = [96, 192, 384, 768]
-
+        # Load base config from MMSeg based on backbone
+        if self.backbone == "swin_tiny":
+            base_cfg_file = "mmsegmentation/configs/mask2former/mask2former_swin-t_8xb2-90k_cityscapes-512x1024.py"
         elif self.backbone == "swin_small":
-            backbone_cfg = dict(
-                type='SwinTransformer',
-                embed_dims=96,
-                depths=[2, 2, 18, 2],
-                num_heads=[3, 6, 12, 24],
-                window_size=7,
-                mlp_ratio=4,
-                qkv_bias=True,
-                qk_scale=None,
-                drop_rate=0.,
-                attn_drop_rate=0.,
-                drop_path_rate=0.3,
-                patch_norm=True,
-                out_indices=(0, 1, 2, 3),
-                with_cp=False,
-
-                init_cfg=dict(type='Pretrained',
-                              checkpoint='https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_small_patch4_window7_224_20220317-7ba6d6dd.pth')
-            )
-            in_channels = [96, 192, 384, 768]
-
-        elif self.backbone == "swin_base":
-            backbone_cfg = dict(
-                type='SwinTransformer',
-                embed_dims=128,
-                depths=[2, 2, 18, 2],
-                num_heads=[4, 8, 16, 32],
-                window_size=7,
-                mlp_ratio=4,
-                qkv_bias=True,
-                qk_scale=None,
-                drop_rate=0.,
-                attn_drop_rate=0.,
-                drop_path_rate=0.3,
-                patch_norm=True,
-                out_indices=(0, 1, 2, 3),
-                with_cp=False,
-                convert_weights=True,
-                init_cfg=dict(type='Pretrained',
-                              checkpoint='https://download.openmmlab.com/mmsegmentation/v0.5/pretrain/swin/swin_base_patch4_window7_224_22kto1k_20220317-4f4dbd45.pth')
-            )
-            in_channels = [128, 256, 512, 1024]
-
+            base_cfg_file = "mmsegmentation/configs/mask2former/mask2former_swin-s_8xb2-90k_cityscapes-512x1024.py"
+        elif self.backbone == "resnet50":
+            base_cfg_file = "mmsegmentation/configs/mask2former/mask2former_r50_8xb2-90k_cityscapes-512x1024.py"
+        elif self.backbone == "resnet101":
+            base_cfg_file = "mmsegmentation/configs/mask2former/mask2former_r101_8xb2-90k_cityscapes-512x1024.py"
         else:
-            raise ValueError(f"Backbone {self.backbone} not supported for Mask2Former. "
-                             f"Supported: resnet50, resnet101, swin_tiny, swin_small, swin_base")
+            raise ValueError(f"Backbone {self.backbone} not supported for Mask2Former")
 
-        # Build complete config
-        return ConfigDict(
-            type='EncoderDecoder',
-            data_preprocessor=dict(
-                type='SegDataPreProcessor',
-                mean=[0.0, 0.0, 0.0],
-                std=[1.0, 1.0, 1.0],
-                bgr_to_rgb=False,
-                pad_val=0,
-                seg_pad_val=255
-            ),
-            backbone=backbone_cfg,
-            decode_head=dict(
-                type='Mask2FormerHead',
-                in_channels=in_channels,
-                feat_channels=256,
-                out_channels=256,
-                num_classes=self.num_classes,
-                num_queries=100,
-                num_transformer_feat_level=3,
-                align_corners=False,
-                pixel_decoder=dict(
-                    type='MSDeformAttnPixelDecoder',
-                    num_outs=3,
-                    norm_cfg=dict(type='GN', num_groups=32),
-                    act_cfg=dict(type='ReLU'),
-                    encoder=dict(
-                        type='DetrTransformerEncoder',
-                        num_layers=6,
-                        transformerlayers=dict(
-                            type='BaseTransformerLayer',
-                            attn_cfgs=dict(
-                                type='MultiScaleDeformableAttention',
-                                embed_dims=256,
-                                num_heads=8,
-                                num_levels=3,
-                                num_points=4,
-                                im2col_step=64,
-                                dropout=0.0,
-                                batch_first=False,
-                                norm_cfg=None,
-                                init_cfg=None),
-                            ffn_cfgs=dict(
-                                type='FFN',
-                                embed_dims=256,
-                                feedforward_channels=1024,
-                                num_fcs=2,
-                                ffn_drop=0.0,
-                                act_cfg=dict(type='ReLU', inplace=True)),
-                            operation_order=('self_attn', 'norm', 'ffn', 'norm')),
-                        init_cfg=None),
-                    positional_encoding=dict(
-                        type='SinePositionalEncoding', num_feats=128, normalize=True),
-                    init_cfg=None),
-                enforce_decoder_input_project=False,
-                positional_encoding=dict(
-                    type='SinePositionalEncoding', num_feats=128, normalize=True),
-                transformer_decoder=dict(
-                    type='DetrTransformerDecoder',
-                    return_intermediate=True,
-                    num_layers=9,
-                    transformerlayers=dict(
-                        type='DetrTransformerDecoderLayer',
-                        attn_cfgs=dict(
-                            type='MultiheadAttention',
-                            embed_dims=256,
-                            num_heads=8,
-                            attn_drop=0.0,
-                            proj_drop=0.0,
-                            dropout_layer=None,
-                            batch_first=False),
-                        ffn_cfgs=dict(
-                            embed_dims=256,
-                            feedforward_channels=2048,
-                            num_fcs=2,
-                            act_cfg=dict(type='ReLU', inplace=True),
-                            ffn_drop=0.0,
-                            dropout_layer=None,
-                            add_identity=True),
-                        feedforward_channels=2048,
-                        operation_order=('cross_attn', 'norm', 'self_attn', 'norm',
-                                         'ffn', 'norm')),
-                    init_cfg=None),
-                loss_cls=dict(
-                    type='CrossEntropyLoss',
-                    use_sigmoid=False,
-                    loss_weight=2.0,
-                    reduction='mean',
-                    class_weight=weights_to_use),
-                loss_mask=dict(
-                    type='CrossEntropyLoss',
-                    use_sigmoid=True,
-                    reduction='mean',
-                    loss_weight=5.0),
-                loss_dice=dict(
-                    type='DiceLoss',
-                    use_sigmoid=True,
-                    activate=True,
-                    reduction='mean',
-                    naive_dice=False,
-                    eps=1.0,
-                    loss_weight=5.0)),
-            train_cfg=dict(),
-            test_cfg=dict(mode='whole')
-        )
+        # Load config
+        print(f"Loading config from: {base_cfg_file}")
+        cfg = Config.fromfile(base_cfg_file)
+
+        # Modify for our task
+        cfg.model.data_preprocessor.mean = [0.0, 0.0, 0.0]
+        cfg.model.data_preprocessor.std = [1.0, 1.0, 1.0]
+        cfg.model.data_preprocessor.bgr_to_rgb = False
+
+        # Update num_classes
+        cfg.model.decode_head.num_classes = self.num_classes
+        if hasattr(cfg.model.decode_head, 'num_things_classes'):
+            cfg.model.decode_head.num_things_classes = 0  # Semantic only
+        if hasattr(cfg.model.decode_head, 'num_stuff_classes'):
+            cfg.model.decode_head.num_stuff_classes = self.num_classes
+
+        # Update class weights
+        if hasattr(cfg.model.decode_head, 'loss_cls'):
+            cfg.model.decode_head.loss_cls.class_weight = weights_to_use
+
+        # Disable pretrained checkpoint loading
+        cfg.load_from = None
+
+        print(f"✓ Mask2Former config loaded with {self.num_classes} classes")
+
+        return cfg.model
 

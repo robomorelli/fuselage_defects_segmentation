@@ -144,6 +144,7 @@ def training_cycle_segmentation(cfg, model, train_loader, val_loader, optimizer,
 
             # Forward + backward
             optimizer.zero_grad()
+
             losses_dict = model(images, data_samples, mode='loss')
             losses = sum([v for k, v in losses_dict.items() if 'loss' in k.lower()])
             losses.backward()
