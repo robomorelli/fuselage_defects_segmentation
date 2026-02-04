@@ -76,5 +76,5 @@ python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_s
   --sweep_id "$sweep_id"
 
 
-#./artificial_intelligence/repos/fuselage_defects_segmentation/batch_scripts/000_wrapper_run_batch_hyp.sh --entity robmorelli --project_name segformer_hyp_opt_dv_3_classes  --sweep_cfg sweep --exps_num 20  --ngpus 3 --ncpus 36
+#./artificial_intelligence/repos/fuselage_defects_segmentation/batch_scripts/000_wrapper_run_batch_hyp.sh --entity robmorelli --project_name segformer_hyp_opt_dv_3_classes  --sweep_cfg sweeps --exps_num 20  --ngpus 3 --ncpus 36
 

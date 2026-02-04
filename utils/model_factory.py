@@ -4,7 +4,33 @@ Centralized model configuration and instantiation.
 """
 
 import torch
+from mmengine import Config
 from mmengine.config import ConfigDict
+
+
+def freeze_backbone_layers(model, backbone_type, n_layers):
+    """
+    Freeze first n backbone stages.
+    n_layers = 0 -> no freeze
+    """
+    if n_layers == 0:
+        return
+
+    if backbone_type.startswith("resnet"):
+        layers = ["layer1", "layer2", "layer3", "layer4"]
+        for layer_name in layers[:n_layers]:
+            layer = getattr(model.backbone, layer_name)
+            for param in layer.parameters():
+                param.requires_grad = False
+
+    elif backbone_type.startswith("swin"):
+
+        # Nelle versioni recenti di MMSeg/MMEngine, SwinTransformer usa .stages invece di .layers
+        for i in range(min(n_layers, len(model.backbone.stages))):
+            for param in model.backbone.stages[i].parameters():
+                param.requires_grad = False
+    else:
+        raise ValueError(f"Freeze not supported for backbone {backbone_type}")
 
 
 class SegmentationModelFactory:
@@ -13,7 +39,7 @@ class SegmentationModelFactory:
     Supports: DeepLabV3+, PSPNet, U-Net, Mask2Former
     """
 
-    SUPPORTED_ARCHITECTURES = ['deeplabv3plus.yaml', 'pspnet', 'unet', 'mask2former']
+    SUPPORTED_ARCHITECTURES = ['deeplabv3plus', 'pspnet', 'unet', 'mask2former']
 
     def __init__(self, cfg, device):
         self.cfg = cfg
@@ -21,10 +47,11 @@ class SegmentationModelFactory:
         self.architecture = cfg.model.architecture
         self.backbone = cfg.model.backbone
         self.num_classes = cfg.model.num_classes
+        self.crop_size = cfg.dataset.crop_size
 
         if self.architecture not in self.SUPPORTED_ARCHITECTURES:
             raise ValueError(f"Architecture {self.architecture} not supported. "
-                           f"Choose from: {self.SUPPORTED_ARCHITECTURES}")
+                             f"Choose from: {self.SUPPORTED_ARCHITECTURES}")
 
     def build(self):
         """Build and return model based on architecture."""
@@ -38,7 +65,7 @@ class SegmentationModelFactory:
         print(f"Building {self.architecture.upper()} with backbone: {self.backbone}")
 
         # Build config based on architecture
-        if self.architecture == 'deeplabv3plus.yaml':
+        if self.architecture == 'deeplabv3plus':
             model_cfg = self._build_deeplabv3plus()
         elif self.architecture == 'pspnet':
             model_cfg = self._build_pspnet()
@@ -50,6 +77,20 @@ class SegmentationModelFactory:
         # Build model
         print("Building model...")
         model = build_segmentor(model_cfg)
+
+        freeze_layers = self.cfg.model.get("freeze_layers", 0)
+
+        trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        total = sum(p.numel() for p in model.parameters())
+
+        print(f"🧊 Frozen layers: {freeze_layers}")
+        print(f"🔥 Trainable params: {trainable:,} / {total:,}")
+
+        freeze_backbone_layers(
+            model,
+            backbone_type=self.backbone,
+            n_layers=freeze_layers
+        )
 
         print("Initializing weights...")
         model.init_weights()
@@ -85,7 +126,6 @@ class SegmentationModelFactory:
                 style='pytorch',
                 contract_dilation=True
             ), 2048, 256
-
         else:
             raise ValueError(f"Backbone {self.backbone} not supported")
 
@@ -100,15 +140,18 @@ class SegmentationModelFactory:
         backbone_cfg, in_channels, c1_channels = self._get_backbone_config()
         class_weights = self._get_class_weights()
 
+        crop_h, crop_w = (self.crop_size, self.crop_size) if isinstance(self.crop_size, int) else self.crop_size
+
         return ConfigDict(
             type='EncoderDecoder',
             data_preprocessor=dict(
                 type='SegDataPreProcessor',
-                mean=[0.0, 0.0, 0.0],      # No normalization (already done in dataset)
-                std=[1.0, 1.0, 1.0],       # Identity transform
-                bgr_to_rgb=False,          # Already RGB from dataset (cv2.cvtColor applied)
+                mean=[0.0, 0.0, 0.0],
+                std=[1.0, 1.0, 1.0],
+                bgr_to_rgb=False,
                 pad_val=0,
-                seg_pad_val=255
+                seg_pad_val=255,
+
             ),
             backbone=backbone_cfg,
             decode_head=dict(
@@ -127,7 +170,7 @@ class SegmentationModelFactory:
                     type='CrossEntropyLoss',
                     use_sigmoid=False,
                     loss_weight=1.0,
-                    class_weight=class_weights  # Apply class weights here
+                    class_weight=class_weights
                 )
             ),
             auxiliary_head=dict(
@@ -145,7 +188,7 @@ class SegmentationModelFactory:
                     type='CrossEntropyLoss',
                     use_sigmoid=False,
                     loss_weight=0.4,
-                    class_weight=class_weights  # Apply class weights here too
+                    class_weight=class_weights
                 )
             ),
             train_cfg=dict(),
@@ -157,15 +200,18 @@ class SegmentationModelFactory:
         backbone_cfg, in_channels, _ = self._get_backbone_config()
         class_weights = self._get_class_weights()
 
+        crop_h, crop_w = (self.crop_size, self.crop_size) if isinstance(self.crop_size, int) else self.crop_size
+
         return ConfigDict(
             type='EncoderDecoder',
             data_preprocessor=dict(
                 type='SegDataPreProcessor',
-                mean=[0.0, 0.0, 0.0],      # No normalization (already done in dataset)
-                std=[1.0, 1.0, 1.0],       # Identity transform
-                bgr_to_rgb=False,          # Already RGB from dataset
+                mean=[0.0, 0.0, 0.0],
+                std=[1.0, 1.0, 1.0],
+                bgr_to_rgb=False,
                 pad_val=0,
-                seg_pad_val=255
+                seg_pad_val=255,
+
             ),
             backbone=backbone_cfg,
             decode_head=dict(
@@ -210,16 +256,18 @@ class SegmentationModelFactory:
     def _build_unet(self):
         """Build U-Net configuration."""
         class_weights = self._get_class_weights()
+        crop_h, crop_w = (self.crop_size, self.crop_size) if isinstance(self.crop_size, int) else self.crop_size
 
         return ConfigDict(
             type='EncoderDecoder',
             data_preprocessor=dict(
                 type='SegDataPreProcessor',
-                mean=[0.0, 0.0, 0.0],      # No normalization (already done in dataset)
-                std=[1.0, 1.0, 1.0],       # Identity transform
-                bgr_to_rgb=False,          # Already RGB from dataset
+                mean=[0.0, 0.0, 0.0],
+                std=[1.0, 1.0, 1.0],
+                bgr_to_rgb=False,
                 pad_val=0,
-                seg_pad_val=255
+                seg_pad_val=255,
+
             ),
             backbone=dict(
                 type='UNet',
@@ -256,11 +304,59 @@ class SegmentationModelFactory:
                 )
             ),
             train_cfg=dict(),
-            test_cfg=dict(mode='slide', crop_size=(512, 512), stride=(341, 341))
+            test_cfg=dict(
+                mode='slide',
+                crop_size=(crop_h, crop_w),
+                stride=(int(crop_h * 0.66), int(crop_w * 0.66))
+            )
         )
 
     def _build_mask2former(self):
-        """Build Mask2Former configuration (PLACEHOLDER - needs proper setup)."""
-        print("⚠️  Mask2Former requires additional setup (DeformableAttention compilation).")
-        print("   Falling back to DeepLabV3+ for now.")
-        return self._build_deeplabv3plus()
+        """Build Mask2Former configuration dynamically based on backbone type.
+
+        - Loads the config file based on sweep backbone (swin_tiny / swin_small)
+        - Keeps pretrained backbone weights
+        - Updates decode_head, mask_head, and auxiliary_head for new number of classes
+        - Updates class weights only if they match the number of classes
+        """
+        print(f"✅ Building Mask2Former with backbone: {self.backbone}")
+
+        # Choose config file based on backbone
+        if self.backbone == "swin_tiny":
+            cfg_file = "mmsegmentation/configs/mask2former/mask2former_swin-t_8xb2-160k_ade20k-512x512.py"
+        elif self.backbone == "swin_small":
+            cfg_file = "mmsegmentation/configs/mask2former/mask2former_swin-s_8xb2-160k_ade20k-512x512.py"
+        else:
+            raise ValueError(f"Unsupported backbone for Mask2Former: {self.backbone}")
+
+        # Load config (includes pretrained backbone)
+        cfg = Config.fromfile(cfg_file)
+        model_cfg = cfg.model
+
+        # Get optional class weights
+        class_weights = self._get_class_weights()
+
+        # Update all heads
+        for head_name in ["decode_head", "mask_head", "auxiliary_head"]:
+            if hasattr(model_cfg, head_name):
+                head = getattr(model_cfg, head_name)
+                head.num_classes = self.num_classes
+                # Only use class_weights if they match the number of classes
+                # Determine class weights
+                if class_weights is not None and len(class_weights) == self.num_classes:
+                    weights_to_use = list(class_weights)
+                else:
+                    # Default: all ones
+                    weights_to_use = [1.0] * self.num_classes
+
+                # Apply to head if it has a loss_cls attribute
+                if hasattr(head, "loss_cls"):
+                    head.loss_cls.class_weight = weights_to_use
+
+        # Disable ADE20K pretrained loading from config
+        cfg.load_from = None
+
+        return model_cfg
+
+
+

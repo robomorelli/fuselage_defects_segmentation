@@ -1,4 +1,4 @@
-# Simple YOLOv8-seg sweep configuration for defect detection
+# Simple YOLOv8-seg sweeps configuration for defect detection
 program: train_yolo.py
 
 method: bayes

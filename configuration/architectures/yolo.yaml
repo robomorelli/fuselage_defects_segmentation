@@ -1,5 +1,6 @@
 wandb:
   online: 1
+  project: "fuselage_segmentation_yolo_hpo"
 
 dataset:
   data_path: "./data/cropped_data/"
@@ -14,7 +15,7 @@ dataset:
 
 model:
   name: "yolov8seg"
-  encoder_name: 'yolov8m-seg'  # Verrà sovrascritto da model_size nello sweep
+  encoder_name: 'yolov8m-seg'  # Verrà sovrascritto da model_size nello sweeps
   exp_name: '1_fold'
   num_classes: 3
   checkpoint: Null

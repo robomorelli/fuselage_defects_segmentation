@@ -19,14 +19,15 @@ parameters:
     values:
       - "swin_tiny"    # Lightweight transformer
       - "swin_small"   # Medium transformer
-      - "resnet50"     # CNN baseline
-      - "resnet101"    # Larger CNN
+
+  freeze_layers:
+    values: [  2, 3, 4 ]
 
   batch:
     values: [1, 2]  # Mask2Former is very memory intensive
 
   crop_size:
-    values: [512, 768]
+    values: [512]
 
   num_queries:
     values: [30, 50, 100]  # Mask2Former specific: number of object queries

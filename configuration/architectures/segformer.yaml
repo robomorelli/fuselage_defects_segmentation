@@ -1,5 +1,6 @@
 wandb:
   online: 1
+  project: "fuselage_segmentation_segoformer_hpo"
 
 dataset:
   data_path: "./data/cropped_data/"

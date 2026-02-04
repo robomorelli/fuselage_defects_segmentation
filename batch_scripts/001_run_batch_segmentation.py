@@ -3,7 +3,7 @@ import os
 
 def main(args):
     """
-    Generate and submit PBS script for segmentation HPO sweep.
+    Generate and submit PBS script for segmentation HPO sweeps.
     """
     entity = args.entity
     sweep_cfg = args.sweep_cfg
@@ -81,7 +81,7 @@ python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_s
 
 if __name__ == '__main__':
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Submit segmentation HPO sweep to PBS cluster')
+    parser = argparse.ArgumentParser(description='Submit segmentation HPO sweeps to PBS cluster')
     parser.add_argument("--entity", default='robmorelli', help="Wandb entity")
     parser.add_argument("--project_name", default='fuselage_segmentation_hpo', help="Wandb project name")
     parser.add_argument("--architecture", default='deeplabv3plus',
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     parser.add_argument("--group", default=None, help="Wandb group name")
     parser.add_argument('--ngpus', type=int, default=1, help="Number of GPUs")
     parser.add_argument('--ncpus', type=int, default=12, help="Number of CPUs")
-    parser.add_argument('--sweep_id', default=None, help="Existing sweep ID (optional)")
+    parser.add_argument('--sweep_id', default=None, help="Existing sweeps ID (optional)")
     args, unknown = parser.parse_known_args()
 
     # Call the main function

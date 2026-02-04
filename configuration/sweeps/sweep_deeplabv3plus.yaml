@@ -1,0 +1,60 @@
+# Deep HPO for DeepLabV3+
+# Goal: Find optimal hyperparameters for DeepLabV3+
+method: bayes
+metric:
+  name: Validation IoU
+  goal: maximize
+
+parameters:
+  fold:
+    value: 1
+
+  epochs:
+    value: 100
+
+  architecture:
+    value: "deeplabv3plus"  # Fixed
+
+  backbone:
+    values: ["resnet50", "resnet101"]  # Test both ResNet depths
+
+  freeze_layers:
+    values: [ 0, 1, 2, 3, 4 ]
+
+  batch:
+    values: [2, 4]  # Test different batch sizes
+
+  crop_size:
+    values: [512]  # Test different input resolutions
+
+  classes_weights:
+    values:
+      - [1, 1, 1.05, 2.5]      # Original
+      - [1, 1.5, 1.5, 3.0]     # More weight on defects
+      - [1, 2, 2, 4]           # Much more weight on defects
+      - [0.5, 1, 1, 2.5]       # Less weight on background
+
+  lr:
+    distribution: log_uniform_values
+    min: 0.00005
+    max: 0.0005
+
+  weight_decay:
+    distribution: log_uniform_values
+    min: 0.00001
+    max: 0.0001
+
+  lr_patience:
+    values: [4, 5, 6]
+
+  es_patience:
+    values: [7, 8, 10]
+
+  n_gpus:
+    value: 1
+
+  ncpus:
+    value: 6
+
+program:
+  train_segmentator.py

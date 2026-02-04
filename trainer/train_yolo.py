@@ -110,7 +110,7 @@ def prepare_data_yaml(cfg, fold):
 
 def train():
     """
-    Main training function called by wandb agent for each sweep run.
+    Main training function called by wandb agent for each sweeps run.
     This is the equivalent of the Segformer train() function but for YOLO.
     """
     # Initialize wandb for this run
@@ -128,7 +128,7 @@ def train():
     if not cfg.wandb.online:
         os.environ["WANDB_MODE"] = "offline"
 
-    # Extract sweep parameters and cast to correct types
+    # Extract sweeps parameters and cast to correct types
     cfg.dataset.fold = int(wandb.config.get('fold', '1'))
     cfg.opt.weights = list(wandb.config.get('classes_weights'))
     cfg.opt.lr = float(wandb.config.get('lr', '0.0001'))
@@ -146,7 +146,7 @@ def train():
     # Generate unique timestamp for this run
     now = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 
-    # Get sweep information
+    # Get sweeps information
     sweep_id = run.sweep_id
     api = wandb.Api()
     entity = run.entity

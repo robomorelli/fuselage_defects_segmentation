@@ -1,4 +1,4 @@
-# Resolution comparison sweep
+# Resolution comparison sweeps
 # Goal: Find optimal crop size for your defects
 method: grid
 metric:

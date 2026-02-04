@@ -1,0 +1,56 @@
+# Deep HPO for PSPNet
+# Goal: Find optimal hyperparameters for PSPNet
+method: bayes
+metric:
+  name: Validation IoU
+  goal: maximize
+
+parameters:
+  fold:
+    value: 1
+
+  epochs:
+    value: 100
+
+  architecture:
+    value: "pspnet"  # Fixed
+
+  backbone:
+    values: ["resnet50", "resnet101"]  # Test both ResNet depths
+
+  batch:
+    values: [2, 4]
+
+  crop_size:
+    values: [512, 768]
+
+  classes_weights:
+    values:
+      - [1, 1, 1.05, 2.5]
+      - [1, 1.5, 1.5, 3.0]
+      - [1, 2, 2, 4]
+
+  lr:
+    distribution: log_uniform_values
+    min: 0.00008
+    max: 0.0003  # PSPNet can handle slightly higher LR
+
+  weight_decay:
+    distribution: log_uniform_values
+    min: 0.00001
+    max: 0.0001
+
+  lr_patience:
+    values: [4, 5, 6]
+
+  es_patience:
+    values: [7, 8]
+
+  n_gpus:
+    value: 1
+
+  ncpus:
+    value: 6
+
+program:
+  train_segmentator.py

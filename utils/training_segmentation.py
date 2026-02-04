@@ -13,6 +13,7 @@ from torchmetrics.classification import JaccardIndex
 from utils.model_factory import SegmentationModelFactory
 
 
+
 def load_segmentation_model(cfg, device):
     """
     Load segmentation model using factory pattern.

@@ -16,7 +16,7 @@ def main(args):
     cfg_yaml = os.path.join(config_folder, f'{args.conf_yaml}.yaml')
     sweep_yaml = os.path.join(config_folder, f'{args.sweep_cfg}.yaml')
 
-    # Read sweep configuration
+    # Read sweeps configuration
     sweep_config = read_yaml(sweep_yaml)
     model_cfg = Box(read_yaml(cfg_yaml))
 
@@ -26,7 +26,7 @@ def main(args):
     }
     method = model_cfg.opt.method
 
-    # Add the metric block to the sweep configuration
+    # Add the metric block to the sweeps configuration
     sweep_config['metric'] = metric_block
     sweep_config['method'] = method
     sweep_config['parameters']['cfg'] = {'value': model_cfg}  # Add dataset YAML dynamically
@@ -34,9 +34,9 @@ def main(args):
     sweep_config['parameters']['ngpus'] = {'value': args.ngpus}
     sweep_config['parameters']['ncpus'] = {'value': args.ncpus}
     if args.group is not None:
-        os.environ[ "WANDB_GROUP"] = args.group  # it cannot be added to sweep cfg because it need to init wandb before getting weep cfg (see train funct.)
+        os.environ[ "WANDB_GROUP"] = args.group  # it cannot be added to sweeps cfg because it need to init wandb before getting weep cfg (see train funct.)
 
-    # Initialize the sweep
+    # Initialize the sweeps
     # project is the name on wandb API
     if args.sweep_id is not None and args.sweep_id != "None":
         # Define the bash command
@@ -48,12 +48,12 @@ def main(args):
         sweep_id = wandb.sweep(sweep_config, project=args.project_name, entity=args.entity)
         print(f"SWEEP_ID: {sweep_id}")
         os.environ["sweep_id"] = sweep_id
-        # Run the sweep
+        # Run the sweeps
         wandb.agent(sweep_id, function=train, count=args.exps_num)
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Run YOLO sweep with wandb")
+    parser = argparse.ArgumentParser(description="Run YOLO sweeps with wandb")
     parser.add_argument("--entity", default='robmorelli', help="Dataset configuration file (YAML)")
     parser.add_argument("--project_name", default='segformer_hyp_opt_dv_3_classes_test', help="Dataset configuration file (YAML)")
     parser.add_argument("--conf_yaml", default='segformer', help="Dataset configuration file (YAML)")

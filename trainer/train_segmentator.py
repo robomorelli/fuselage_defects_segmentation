@@ -14,7 +14,7 @@ from utils.training_segmentation import (
     create_segmentation_dataloader,
     training_cycle_segmentation
 )
-from utils.early_stopping import EarlyStopping
+from utils.opt import EarlyStopping
 
 
 def get_free_gpu():
@@ -82,7 +82,7 @@ def train():
     run = wandb.init()
 
     # Get architecture from wandb config
-    architecture = wandb.config.get('architecture', 'deeplabv3plus.yaml')
+    architecture = wandb.config.get('architecture', 'deeplabv3plus')
 
     # Load architecture-specific config
     config_path = f'configuration/architectures/{architecture}.yaml'
@@ -96,13 +96,14 @@ def train():
     if not wandb_online:
         os.environ["WANDB_MODE"] = "offline"
 
-    # Override with wandb sweep parameters
+    # Override with wandb sweeps parameters
     cfg.dataset.fold = int(wandb.config.get('fold', 1))
     cfg.dataset.crop_size = int(wandb.config.get('crop_size', 512))
     cfg.dataset.batch_size = int(wandb.config.get('batch', 4))
 
     cfg.model.architecture = str(wandb.config.get('architecture', 'deeplabv3plus.yaml'))
     cfg.model.backbone = str(wandb.config.get('backbone', 'resnet50'))
+    cfg.model.freeze_layers = wandb.config.get("freeze_layers", 0)
 
     cfg.opt.weights = list(wandb.config.get('classes_weights', [1, 1, 1.05, 2.5]))
     cfg.opt.lr = float(wandb.config.get('lr', 0.0001))
@@ -181,8 +182,7 @@ def train():
 
     early_stopping = EarlyStopping(
         patience=cfg.opt.es_patience,
-        verbose=True,
-        delta=0.0001
+        min_delta=0.0001
     )
 
     # Training

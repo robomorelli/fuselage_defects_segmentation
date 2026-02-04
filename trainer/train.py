@@ -81,13 +81,13 @@ def train():
     # Generate a unique timestamp for this training run
     now = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
 
-    # Access the sweep ID for this run
+    # Access the sweeps ID for this run
     sweep_id = run.sweep_id
     api = wandb.Api()
     entity = run.entity  # Automatically get the entity of the current run
     project = run.project  # Automatically get the project of the current run
     sweep = api.sweep(f"{entity}/{project}/{sweep_id}")
-    sweep_name = sweep.name  # Retrieve the sweep name
+    sweep_name = sweep.name  # Retrieve the sweeps name
 
     fold = int(wandb.config.get('fold', '1'))  # Ensure fold is an integer
 

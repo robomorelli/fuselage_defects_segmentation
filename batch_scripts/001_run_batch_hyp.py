@@ -63,7 +63,7 @@ if __name__ == '__main__':
     parser.add_argument("--entity", default='robmorelli', help="Dataset configuration file (YAML)")
     parser.add_argument("--project_name", default='hyperparameters_opt', help="Dataset configuration file (YAML)")
     parser.add_argument("--hyp_cfg", default='hyp', help="hyp config file name (YAML)")
-    parser.add_argument("--sweep_cfg", default='sweep', help="Sweep configuration file (YAML)")
+    parser.add_argument("--sweep_cfg", default='sweeps', help="Sweep configuration file (YAML)")
     parser.add_argument("--exps_num", default=10, help="number of trials")
     parser.add_argument("--group", default=None, help="number of trials")
     parser.add_argument('--ngpus', type=int, default=1, help="Number of GPUs to request for the job.")

@@ -1,7 +1,7 @@
-# DeepLabV3+ configuration
+# PSPNet configuration
 wandb:
   online: 1
-  project: "fuselage_segmentation_hpo"
+  project: "fuselage_segmentation_pspnet_hpo"
 
 dataset:
   data_path: "./data/cropped_data/"
@@ -15,17 +15,17 @@ dataset:
   normalize_imagenet: 1
 
 model:
-  name: "deeplabv3plus"
-  architecture: "deeplabv3plus"
+  name: "pspnet"
+  architecture: "pspnet"
   backbone: "resnet50"  # Options: resnet50, resnet101
   num_classes: 4  # Background + Mark + Graffio + Drill
-  exp_name: 'deeplabv3plus_hpo'
+  exp_name: 'pspnet_hpo'
   checkpoint: null
   pretrained: true
   frozen_stages: -1
 
 opt:
-  lr: 0.0001
+  lr: 0.00015
   weight_decay: 0.0001
   es_patience: 8
   lr_patience: 6
