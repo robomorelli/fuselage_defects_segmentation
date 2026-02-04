@@ -1,0 +1,36 @@
+wandb:
+  online: 1
+
+dataset:
+  data_path: "./data/cropped_data/"
+  random_seed: 123
+  shuffle: 1
+  fold: 1       # change to switch folder for training
+  batch_size: 2
+  augmentation: 1
+  val_aug: 1
+  normalize_imagenet: 0
+  automatic_normalize: 0
+
+model:
+  name: "yolov8seg"
+  encoder_name: 'yolov8m-seg'  # Verrà sovrascritto da model_size nello sweep
+  exp_name: '1_fold'
+  num_classes: 3
+  checkpoint: Null
+
+opt:
+  lr: 0.0001
+  es_patience: 8
+  lr_patience: 6  # Non usato direttamente in YOLO ma mantenuto per compatibilità
+  epochs: 200
+  num_workers: 24
+  weights: [1, 1.1, 1, 2]  # Class weights (nota: richiede implementazione custom in YOLO)
+  from_last_to_unfreeze: 10000  # Non applicabile a YOLO
+  save_each_epoch: 0
+  crossentropy_loss: 1  # Non applicabile a YOLO (usa loss proprie)
+  ignore_index: Null
+  processor: 1  # Non applicabile a YOLO
+  method: 'bayes'
+  metric_name: 'Validation IoU'
+  metric_goal: 'maximize'

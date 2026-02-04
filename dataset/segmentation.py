@@ -12,7 +12,7 @@ import torchvision.transforms as T
 import torch
 import numpy as np
 from albumentations import (RandomCrop, CenterCrop, ElasticTransform, RGBShift, Rotate,
-                            Compose, ToFloat, FromFloat, RandomRotate90, Flip, OneOf, MotionBlur, MedianBlur, Blur,
+                            Compose, ToFloat, FromFloat, RandomRotate90, OneOf, MotionBlur, MedianBlur, Blur,
                             Transpose,
                             ShiftScaleRotate, OpticalDistortion, GridDistortion, RandomBrightnessContrast, VerticalFlip,
                             HorizontalFlip,

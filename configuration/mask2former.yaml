@@ -1,0 +1,41 @@
+wandb:
+  online: 1
+
+dataset:
+  data_path: "./data/cropped_data/"
+  crop_size: 768  # UPDATED
+  batch_size: 2   # adjust based on your GPU
+  random_seed: 123
+  shuffle: 1
+  fold: 1
+  augmentation: 1
+  val_aug: 1
+  normalize_imagenet: 1
+
+model:
+  name: "mask2former"
+  backbone: 'swin_tiny'
+  num_queries: 30
+  exp_name: '1_fold'
+  num_classes: 4
+  checkpoint: Null
+  pretrained: True
+  frozen_stages: -1
+
+opt:
+  lr: 0.0001
+  weight_decay: 0.0001
+  es_patience: 8
+  lr_patience: 6
+  epochs: 200
+  num_workers: 24
+  weights: [1, 1, 1.05, 2.5]  # background, mark, graffio, drill
+  save_each_epoch: 0
+  method: 'bayes'
+  metric_name: 'Validation mIoU'
+  metric_goal: 'maximize'
+  deep_supervision: True
+  dec_layers: 9
+  mask_weight: 5.0
+  dice_weight: 5.0
+  cls_weight: 2.0

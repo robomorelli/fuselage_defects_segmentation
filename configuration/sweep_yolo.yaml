@@ -1,0 +1,128 @@
+# Simple YOLOv8-seg sweep configuration for defect detection
+program: train_yolo.py
+
+method: bayes
+
+metric:
+  name: 'Validation IoU'
+  goal: maximize
+
+parameters:
+  # ========== FIXED PARAMETERS ==========
+
+  # Cross-validation fold number
+  fold:
+    value: 1
+
+  # Number of GPUs to use
+  n_gpus:
+    value: 1
+
+  # Total training epochs
+  epochs:
+    value: 200
+
+  # Early stopping patience (stop if no improvement for N epochs)
+  es_patience:
+    value: 8
+
+  # ========== HYPERPARAMETERS TO OPTIMIZE ==========
+
+  # Model size: m=medium (faster), l=large (more accurate)
+  model_size:
+    values: ['m', 'l']
+
+  # Initial learning rate
+  lr:
+    distribution: log_uniform_values
+    min: 0.00001
+    max: 0.001
+
+  # Batch size (will be multiplied by n_gpus)
+  batch:
+    values: [2, 4, 8]
+
+  # Input image size (higher = better for thin scratches, but slower)
+  imgsz:
+    values: [640, 1024]
+
+  # Optimizer type
+  optimizer:
+    values: ['Adam', 'AdamW']
+
+  # Weight decay for regularization
+  weight_decay:
+    distribution: log_uniform_values
+    min: 0.00001
+    max: 0.001
+
+  # ========== FIXED AUGMENTATION & TRAINING SETTINGS ==========
+
+  # Final learning rate factor (final_lr = lr0 * lrf)
+  lrf:
+    value: 0.01
+
+  # Momentum for optimizer
+  momentum:
+    value: 0.937
+
+  # Warmup epochs at start of training
+  warmup_epochs:
+    value: 3.0
+
+  warmup_momentum:
+    value: 0.8
+
+  warmup_bias_lr:
+    value: 0.1
+
+  # HSV color augmentation
+  hsv_h:
+    value: 0.015
+  hsv_s:
+    value: 0.7
+  hsv_v:
+    value: 0.4
+
+  # Geometric augmentation (kept low for defect detection)
+  degrees:
+    value: 0.0  # No rotation (defects should keep orientation)
+  translate:
+    value: 0.1
+  scale:
+    value: 0.5
+  shear:
+    value: 0.0  # No shearing (distorts defects)
+  perspective:
+    value: 0.0  # No perspective (distorts defects)
+
+  # Flip augmentation
+  flipud:
+    value: 0.0  # No vertical flip
+  fliplr:
+    value: 0.5  # 50% horizontal flip
+
+  # Advanced augmentation
+  mosaic:
+    value: 1.0  # Use mosaic augmentation
+  mixup:
+    value: 0.0  # No mixup (can confuse defect boundaries)
+
+  # Loss component weights
+  box:
+    value: 7.5  # Bounding box loss weight
+  cls:
+    value: 0.5  # Classification loss weight
+  dfl:
+    value: 1.5  # Distribution focal loss weight
+
+  # ========== SET BY SCRIPT (DO NOT MODIFY) ==========
+
+  cfg:
+    value: null
+  project_name:
+    value: null
+  ngpus:
+    value: null
+  ncpus:
+    value: null

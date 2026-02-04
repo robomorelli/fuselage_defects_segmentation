@@ -2,7 +2,7 @@ import argparse
 import torch.optim
 import wandb
 from utils.general import read_yaml
-from train import train
+from trainer.train import train
 from box import Box
 import subprocess
 from config import *
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     parser.add_argument("--entity", default='robmorelli', help="Dataset configuration file (YAML)")
     parser.add_argument("--project_name", default='segformer_hyp_opt_dv_3_classes_test', help="Dataset configuration file (YAML)")
     parser.add_argument("--conf_yaml", default='segformer', help="Dataset configuration file (YAML)")
-    parser.add_argument("--sweep_cfg", default='sweep', help="Sweep configuration file (YAML)")
+    parser.add_argument("--sweep_cfg", default='sweep_segformer', help="Sweep configuration file (YAML)")
     parser.add_argument("--ngpus", default=1, help="")
     parser.add_argument("--ncpus", default=6, help="")
     parser.add_argument("--exps_num", default=10, help="")
