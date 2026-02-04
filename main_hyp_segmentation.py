@@ -22,7 +22,7 @@ def main():
     parser.add_argument('--project_name', type=str, default='fuselage_segmentation_hpo', help='Wandb project name')
     parser.add_argument('--sweep_cfg', type=str, default='sweep_mask2former', help='Sweep config file (without .yaml)')
     parser.add_argument('--architecture', type=str, default='pspnet',
-                        choices=['deeplabv3plus', 'pspnet', 'mask2former'],
+                        choices=['deeplabv3plus', 'pspnet'], #'mask2former'],
                         help='Model architecture')
     parser.add_argument('--ngpus', type=int, default=1, help='Number of GPUs')
     parser.add_argument('--ncpus', type=int, default=12, help='Number of CPUs')
