@@ -1,0 +1,72 @@
+# Deep HPO for Mask2Former (FUTURE USE)
+# Goal: Find optimal hyperparameters for Mask2Former
+method: bayes
+metric:
+  name: Validation IoU
+  goal: maximize
+
+parameters:
+  fold:
+    value: 1
+
+  epochs:
+    value: 100
+
+  architecture:
+    value: "mask2former"  # Fixed
+
+  backbone:
+    values:
+      - "swin_tiny"    # Lightweight transformer
+      - "swin_small"   # Medium transformer
+      - "resnet50"     # CNN baseline
+      - "resnet101"    # Larger CNN
+
+  batch:
+    values: [1, 2]  # Mask2Former is very memory intensive
+
+  crop_size:
+    values: [512, 768]
+
+  num_queries:
+    values: [30, 50, 100]  # Mask2Former specific: number of object queries
+
+  classes_weights:
+    values:
+      - [1, 1, 1.05, 2.5]
+      - [1, 1.5, 1.5, 3.0]
+      - [1, 2, 2, 4]
+
+  lr:
+    distribution: log_uniform_values
+    min: 0.00005
+    max: 0.0003
+
+  weight_decay:
+    distribution: log_uniform_values
+    min: 0.00001
+    max: 0.0001
+
+  mask_weight:
+    values: [3.0, 5.0, 7.0]  # Mask2Former specific loss weight
+
+  dice_weight:
+    values: [3.0, 5.0, 7.0]  # Mask2Former specific loss weight
+
+  cls_weight:
+    values: [1.0, 2.0, 3.0]  # Mask2Former specific loss weight
+
+  lr_patience:
+    values: [4, 5]
+
+  es_patience:
+    values: [7, 8]
+
+  n_gpus:
+    value: 1
+
+  ncpus:
+    value: 6
+
+program:
+  train_segmentator.py

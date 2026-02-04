@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 
-class Mask2FormerDataset(Dataset):
+class SegmentationDataset(Dataset):
     """
     Dataset adapter for Mask2Former.
     Converts semantic segmentation masks to instance segmentation format.
@@ -64,7 +64,7 @@ class Mask2FormerDataset(Dataset):
 
         # Setup augmentation
         if augmentation and split == 'train':
-            self.transform = A.Compose([
+            transforms_list = [
                 A.RandomCrop(height=crop_size, width=crop_size),
                 A.HorizontalFlip(p=0.5),
                 A.VerticalFlip(p=0.5),
@@ -72,15 +72,35 @@ class Mask2FormerDataset(Dataset):
                 A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, p=0.5),
                 A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.3),
                 A.GaussNoise(p=0.2),
-                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) if normalize else A.NoOp(),
-                ToTensorV2()
-            ])
+            ]
+
+            # Add normalization if requested
+            if normalize:
+                transforms_list.append(
+                    A.Normalize(
+                        mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]
+                    )
+                )
+
+            transforms_list.append(ToTensorV2())
+            self.transform = A.Compose(transforms_list)
+
         else:
-            self.transform = A.Compose([
+            transforms_list = [
                 A.CenterCrop(height=crop_size, width=crop_size),
-                A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]) if normalize else A.NoOp(),
-                ToTensorV2()
-            ])
+            ]
+
+            if normalize:
+                transforms_list.append(
+                    A.Normalize(
+                        mean=[0.485, 0.456, 0.406],
+                        std=[0.229, 0.224, 0.225]
+                    )
+                )
+
+            transforms_list.append(ToTensorV2())
+            self.transform = A.Compose(transforms_list)
 
     def __len__(self):
         return len(self.images_file_names)
@@ -169,7 +189,7 @@ class Mask2FormerDataset(Dataset):
         }
 
 
-def mask2former_collate_fn(batch):
+def segmentation_collate_fn(batch):
     """
     Custom collate function for Mask2Former.
     Handles batches of images with variable number of instances.

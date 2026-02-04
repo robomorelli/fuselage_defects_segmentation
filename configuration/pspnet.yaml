@@ -1,4 +1,4 @@
-# Mask2Former configuration (FUTURE USE - requires additional setup)
+# PSPNet configuration
 wandb:
   online: 1
   project: "fuselage_segmentation_hpo"
@@ -8,25 +8,24 @@ dataset:
   random_seed: 123
   shuffle: 1
   fold: 1
-  batch_size: 2  # Smaller batch for Mask2Former (more memory intensive)
+  batch_size: 4
   crop_size: 512
   augmentation: 1
   val_aug: 0
   normalize_imagenet: 1
 
 model:
-  name: "mask2former"
-  architecture: "mask2former"
-  backbone: "swin_tiny"  # Options: swin_tiny, swin_small, swin_base, resnet50, resnet101
+  name: "pspnet"
+  architecture: "pspnet"
+  backbone: "resnet50"  # Options: resnet50, resnet101
   num_classes: 4  # Background + Mark + Graffio + Drill
-  num_queries: 30  # Mask2Former specific
-  exp_name: 'mask2former_hpo'
+  exp_name: 'pspnet_hpo'
   checkpoint: null
   pretrained: true
   frozen_stages: -1
 
 opt:
-  lr: 0.0001
+  lr: 0.00015
   weight_decay: 0.0001
   es_patience: 8
   lr_patience: 6
@@ -37,10 +36,3 @@ opt:
   method: 'bayes'
   metric_name: 'Validation IoU'
   metric_goal: 'maximize'
-
-  # Mask2Former specific loss weights
-  mask_weight: 5.0
-  dice_weight: 5.0
-  cls_weight: 2.0
-  deep_supervision: true
-  dec_layers: 9

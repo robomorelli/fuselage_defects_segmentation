@@ -2,12 +2,12 @@ import os.path
 
 import torch
 import torch.optim
-from utils.training import training_cycle_segformer_multiclass
+from utils.training_segformer import training_cycle_segformer_multiclass
 from utils.opt import EarlyStopping
 from datetime import datetime
 import wandb
 from box import Box
-from utils.training import load_model, create_dataloader
+from utils.training_segformer import load_model, create_dataloader
 from config import *
 import subprocess
 

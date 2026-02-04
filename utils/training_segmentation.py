@@ -1,106 +1,25 @@
+"""
+Training utilities for segmentation models.
+Generic functions for all architectures: DeepLabV3+, PSPNet, U-Net, Mask2Former
+"""
+
 import torch
 import numpy as np
 from tqdm import tqdm
 import wandb
 import os
-from torch.cuda.amp import autocast, GradScaler
+from torchmetrics.classification import JaccardIndex
 
-try:
-    import mmseg
-    from mmseg.models import build_segmentor
-    from mmseg.registry import MODELS
-    from mmengine.config import Config, ConfigDict
-    from mmengine.runner import load_checkpoint
-    import mmseg.models  # Register all models
-    import mmseg.datasets  # Register all datasets
-
-    MMSEG_AVAILABLE = True
-except ImportError as e:
-    MMSEG_AVAILABLE = False
-    print(f"Warning: MMSegmentation not available: {e}")
+from utils.model_factory import SegmentationModelFactory
 
 
-def load_mask2former_model(cfg, device):
+def load_segmentation_model(cfg, device):
     """
-    Load segmentation model using MMSegmentation.
-    Using a simpler model (DeepLabV3+) that's more stable than Mask2Former.
+    Load segmentation model using factory pattern.
+    Works for all architectures: DeepLabV3+, PSPNet, U-Net, Mask2Former
     """
-    if not MMSEG_AVAILABLE:
-        raise ImportError("MMSegmentation must be installed.")
-
-    from mmengine.registry import DefaultScope
-    DefaultScope.get_instance('mmseg', scope_name='mmseg')
-
-    print(f"Building segmentation model with backbone: {cfg.model.backbone}")
-
-    # Use DeepLabV3+ which is simpler and more stable
-    # You can switch back to Mask2Former once this works
-    model_cfg = ConfigDict(
-        type='EncoderDecoder',
-        data_preprocessor=dict(
-            type='SegDataPreProcessor',
-            mean=[123.675, 116.28, 103.53],
-            std=[58.395, 57.12, 57.375],
-            bgr_to_rgb=True,
-            pad_val=0,
-            seg_pad_val=255
-        ),
-        backbone=dict(
-            type='ResNetV1c',
-            depth=50,
-            num_stages=4,
-            out_indices=(0, 1, 2, 3),
-            dilations=(1, 1, 2, 4),
-            strides=(1, 2, 1, 1),
-            norm_cfg=dict(type='SyncBN', requires_grad=True),
-            norm_eval=False,
-            style='pytorch',
-            contract_dilation=True
-        ),
-        decode_head=dict(
-            type='DepthwiseSeparableASPPHead',
-            in_channels=2048,
-            in_index=3,
-            channels=512,
-            dilations=(1, 12, 24, 36),
-            c1_in_channels=256,
-            c1_channels=48,
-            dropout_ratio=0.1,
-            num_classes=cfg.model.num_classes,
-            norm_cfg=dict(type='SyncBN', requires_grad=True),
-            align_corners=False,
-            loss_decode=dict(
-                type='CrossEntropyLoss',
-                use_sigmoid=False,
-                loss_weight=1.0
-            )
-        ),
-        auxiliary_head=dict(
-            type='FCNHead',
-            in_channels=1024,
-            in_index=2,
-            channels=256,
-            num_convs=1,
-            concat_input=False,
-            dropout_ratio=0.1,
-            num_classes=cfg.model.num_classes,
-            norm_cfg=dict(type='SyncBN', requires_grad=True),
-            align_corners=False,
-            loss_decode=dict(
-                type='CrossEntropyLoss',
-                use_sigmoid=False,
-                loss_weight=0.4
-            )
-        ),
-        train_cfg=dict(),
-        test_cfg=dict(mode='whole')
-    )
-
-    print("Building model...")
-    model = build_segmentor(model_cfg)
-
-    print("Initializing weights...")
-    model.init_weights()
+    factory = SegmentationModelFactory(cfg, device)
+    model = factory.build()
 
     # Load checkpoint if exists
     if cfg.model.checkpoint and os.path.exists(cfg.model.checkpoint):
@@ -114,16 +33,17 @@ def load_mask2former_model(cfg, device):
     return model
 
 
-def create_mask2former_dataloader(cfg, batch_size, num_workers):
+def create_segmentation_dataloader(cfg, batch_size, num_workers):
     """
-    Create dataloaders.
+    Create dataloaders for segmentation.
+    Works for all architectures.
     """
-    from dataset.mask2former_dataset import Mask2FormerDataset, mask2former_collate_fn
+    from dataset.segmentation_dataset import SegmentationDataset, segmentation_collate_fn
     from torch.utils.data import DataLoader
 
     crop_size = cfg.dataset.get('crop_size', 512)
 
-    train_dataset = Mask2FormerDataset(
+    train_dataset = SegmentationDataset(
         data_path=cfg.dataset.data_path,
         fold=cfg.dataset.fold,
         split='train',
@@ -132,7 +52,7 @@ def create_mask2former_dataloader(cfg, batch_size, num_workers):
         crop_size=crop_size
     )
 
-    val_dataset = Mask2FormerDataset(
+    val_dataset = SegmentationDataset(
         data_path=cfg.dataset.data_path,
         fold=cfg.dataset.fold,
         split='val',
@@ -147,7 +67,7 @@ def create_mask2former_dataloader(cfg, batch_size, num_workers):
         shuffle=cfg.dataset.shuffle,
         num_workers=num_workers,
         pin_memory=True,
-        collate_fn=mask2former_collate_fn,
+        collate_fn=segmentation_collate_fn,
         drop_last=True
     )
 
@@ -157,22 +77,22 @@ def create_mask2former_dataloader(cfg, batch_size, num_workers):
         shuffle=False,
         num_workers=num_workers,
         pin_memory=True,
-        collate_fn=mask2former_collate_fn
+        collate_fn=segmentation_collate_fn
     )
 
     return train_loader, val_loader
 
 
-def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
-                               scheduler, early_stopping, model_name, out_dir,
-                               device, num_epochs, metric_goal):
+def training_cycle_segmentation(cfg, model, train_loader, val_loader, optimizer,
+                                scheduler, early_stopping, model_name, out_dir,
+                                device, num_epochs, metric_goal):
     """
-    Training loop for segmentation model.
+    Training loop for segmentation models.
+    Works for all architectures: DeepLabV3+, PSPNet, U-Net, Mask2Former
     """
     best_metric = float('-inf') if metric_goal == 'maximize' else float('inf')
 
-    # Initialize IoU metric for all classes (like SegFormer)
-    from torchmetrics.classification import JaccardIndex
+    # Initialize IoU metrics
     num_classes = cfg.model.num_classes
     iou_metric = JaccardIndex(task="multiclass", num_classes=num_classes, average="none").to(device)
     iou_metric_mean = JaccardIndex(task="multiclass", num_classes=num_classes).to(device)
@@ -194,11 +114,12 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
         pbar = tqdm(train_loader, desc=f"Training", unit="batch")
         for batch_idx, batch in enumerate(pbar):
             images = batch['images'].to(device)
-            images = images.float()
+            images = images.float()  # Ensure float32
 
             batch_size, _, h, w = images.shape
             semantic_masks = torch.zeros((batch_size, h, w), dtype=torch.long, device=device)
 
+            # Convert instance masks to semantic masks
             for i, target in enumerate(batch['targets']):
                 masks = target['masks'].to(device)
                 labels = target['labels'].to(device)
@@ -207,7 +128,7 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
                     binary_mask = (mask > 0.5).long()
                     semantic_masks[i][binary_mask == 1] = label
 
-            # Prepare data_samples
+            # Prepare data_samples for MMSeg
             data_samples = []
             for i in range(batch_size):
                 from mmseg.structures import SegDataSample
@@ -227,7 +148,7 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
 
             # Get predictions for IoU
             with torch.no_grad():
-                # ADD METADATA for predict mode
+                # Add metadata for predict mode
                 for data_sample in data_samples:
                     data_sample.set_metainfo({
                         'ori_shape': (h, w),
@@ -238,8 +159,7 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
 
                 results = model(images, data_samples, mode='predict')
                 preds = torch.stack([result.pred_sem_seg.data for result in results])
-
-                preds = preds.squeeze(1)  # ADD THIS LINE
+                preds = preds.squeeze(1)  # Remove channel dimension
 
                 iou_scores = iou_metric(preds, semantic_masks)
                 iou_score_mean = iou_metric_mean(preds, semantic_masks)
@@ -260,17 +180,15 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
         train_iou_mean_epoch = running_iou_mean / train_steps
         train_losses.append(train_loss_epoch)
 
-        # Log training metrics to wandb (EVERY EPOCH like SegFormer)
+        # Log training metrics
         log_dict = {
             "Train Loss": train_loss_epoch,
             "Train IoU": train_iou_mean_epoch,
             "Train IoU Mean": sum(train_iou_epoch) / len(train_iou_epoch),
             "Epoch": epoch + 1
         }
-        # Add per-class IoU
         for c in range(num_classes):
             log_dict[f"Train IoU Class {c}"] = train_iou_epoch[c]
-
         wandb.log(log_dict)
 
         # ===== VALIDATION PHASE =====
@@ -312,7 +230,7 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
                 losses_dict = model(images, data_samples, mode='loss')
                 losses = sum([v for k, v in losses_dict.items() if 'loss' in k.lower()])
 
-                # ADD METADATA for predict mode
+                # Get predictions
                 for data_sample in data_samples:
                     data_sample.set_metainfo({
                         'ori_shape': (h, w),
@@ -321,13 +239,10 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
                         'scale_factor': (1.0, 1.0)
                     })
 
-                # Get predictions
                 results = model(images, data_samples, mode='predict')
                 preds = torch.stack([result.pred_sem_seg.data for result in results])
+                preds = preds.squeeze(1)
 
-                preds = preds.squeeze(1)  # ADD THIS LINE
-
-                # Calculate IoU
                 iou_scores = iou_metric(preds, semantic_masks)
                 iou_score_mean = iou_metric_mean(preds, semantic_masks)
 
@@ -347,7 +262,7 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
         val_iou_mean_epoch = running_iou_mean / val_steps
         val_losses.append(val_loss_epoch)
 
-        # Log validation metrics to wandb (EVERY EPOCH)
+        # Log validation metrics
         log_dict = {
             "Validation Loss": val_loss_epoch,
             "Validation IoU": val_iou_mean_epoch,
@@ -355,27 +270,22 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
             "learning_rate": optimizer.param_groups[0]['lr'],
             "Epoch": epoch + 1
         }
-        # Add per-class IoU
         for c in range(num_classes):
             log_dict[f"Validation IoU Class {c}"] = val_iou_epoch[c]
-
         wandb.log(log_dict)
 
-        # Print epoch summary
         print(
             f'\nEpoch {epoch + 1}: Val Loss = {val_loss_epoch:.4f}, Val IoU = {sum(val_iou_epoch) / len(val_iou_epoch):.4f}')
         print(f"Per-class IoU: {val_iou_epoch}")
 
-        # Scheduler step
         scheduler.step(val_loss_epoch)
-
-        # Early stopping
         early_stopping(val_loss_epoch)
+
         if early_stopping.early_stop:
             print(f"\n⚠️  Early stopping triggered at epoch {epoch + 1}")
             break
 
-        # Check if best model
+        # Save best model
         save_condition = (metric_goal == "minimize" and val_loss_epoch < best_metric) or \
                          (metric_goal == "maximize" and sum(val_iou_epoch) / len(val_iou_epoch) > best_metric)
 
@@ -408,80 +318,3 @@ def training_cycle_mask2former(cfg, model, train_loader, val_loader, optimizer,
     print(f"{'=' * 50}")
 
     wandb.finish()
-
-def validate_mask2former(model, val_loader, device, num_classes):
-    """
-    Validation with mIoU calculation.
-    """
-    model.eval()
-    val_loss = 0.0
-    confusion_matrix = np.zeros((num_classes, num_classes), dtype=np.int64)
-
-    with torch.no_grad():
-        for batch in tqdm(val_loader, desc="Validating"):
-            images = batch['images'].to(device)
-
-            batch_size, _, h, w = images.shape
-            gt_semantic_masks = []
-            data_samples = []
-
-            for i, target in enumerate(batch['targets']):
-                masks = target['masks'].to(device)
-                labels = target['labels'].to(device)
-
-                semantic_mask = torch.zeros((h, w), dtype=torch.long, device=device)
-                for mask, label in zip(masks, labels):
-                    binary_mask = (mask > 0.5).long()
-                    semantic_mask[binary_mask == 1] = label
-
-                gt_semantic_masks.append(semantic_mask)
-
-                from mmseg.structures import SegDataSample
-                from mmengine.structures import PixelData
-                data_sample = SegDataSample()
-                gt_sem_seg_data = PixelData()
-                gt_sem_seg_data.data = semantic_mask
-                data_sample.gt_sem_seg = gt_sem_seg_data
-                data_samples.append(data_sample)
-
-            try:
-                losses_dict = model(images, data_samples, mode='loss')
-                losses = sum([v for k, v in losses_dict.items() if 'loss' in k.lower()])
-                val_loss += losses.item()
-            except:
-                pass
-
-            results = model(images, data_samples, mode='predict')
-
-            for i, result in enumerate(results):
-                pred_semantic = result.pred_sem_seg.data.cpu().numpy()
-                gt_semantic = gt_semantic_masks[i].cpu().numpy()
-
-                pred_flat = pred_semantic.flatten()
-                gt_flat = gt_semantic.flatten()
-
-                for gt_cls in range(num_classes):
-                    for pred_cls in range(num_classes):
-                        mask_gt = (gt_flat == gt_cls)
-                        mask_pred = (pred_flat == pred_cls)
-                        confusion_matrix[gt_cls, pred_cls] += np.sum(mask_gt & mask_pred)
-
-    iou_per_class = []
-    for i in range(num_classes):
-        tp = confusion_matrix[i, i]
-        fp = confusion_matrix[:, i].sum() - tp
-        fn = confusion_matrix[i, :].sum() - tp
-
-        denominator = tp + fp + fn
-        iou = tp / denominator if denominator > 0 else 0.0
-        iou_per_class.append(iou)
-
-    miou = np.mean(iou_per_class)
-    avg_val_loss = val_loss / len(val_loader) if len(val_loader) > 0 else 0
-
-    return {
-        'mIoU': miou,
-        'loss': avg_val_loss,
-        'iou_per_class': iou_per_class,
-        'confusion_matrix': confusion_matrix
-    }

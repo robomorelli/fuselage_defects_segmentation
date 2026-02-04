@@ -1,0 +1,49 @@
+# Resolution comparison sweep
+# Goal: Find optimal crop size for your defects
+method: grid
+metric:
+  name: Validation IoU
+  goal: maximize
+
+parameters:
+  fold:
+    value: 1
+
+  epochs:
+    value: 50
+
+  architecture:
+    values: ["deeplabv3plus", "pspnet"]
+
+  backbone:
+    value: "resnet50"
+
+  batch:
+    values: [2, 4]  # Larger crops need smaller batch
+
+  crop_size:
+    values: [384, 512, 640, 768]  # Test multiple resolutions
+
+  classes_weights:
+    value: [1, 1, 1.05, 2.5]
+
+  lr:
+    value: 0.0001
+
+  weight_decay:
+    value: 0.0001
+
+  lr_patience:
+    value: 5
+
+  es_patience:
+    value: 7
+
+  n_gpus:
+    value: 1
+
+  ncpus:
+    value: 6
+
+program:
+  train_segmentator.py

@@ -1,0 +1,30 @@
+#!/bin/bash
+#PBS -N fus_segmentation_hyp
+#PBS -o fus_segmentation_hyp.txt
+#PBS -q gpu
+#PBS -e fus_segmentation_hyp.txt
+#PBS -k oe
+#PBS -m e
+#PBS -M roberto.morelli.ext@leonardocompany.com
+#PBS -l select=1:ncpus=12:ngpus=1,walltime=72:00:00
+
+NUM_NODES=$(cat $PBS_NODEFILE | wc -l)
+
+echo "start training"
+# ENV that are the ARGS to pass to the function
+echo "entity": robmorelli
+echo "sweep_cfg": sweep
+echo "num ngpus": 1
+echo "num ncpus": 12
+echo "project_name": segformer_hyp_opt_one_shot_2
+echo "group": None
+echo "exps_num": 1
+echo "sweep_id": None
+
+module load proxy/proxy_20
+
+source $HOME/.bashrc
+cd /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation
+
+conda activate flai
+python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/main_hyp_segmentation.py --architecture deeplabv3plus --entity robmorelli --project_name segformer_hyp_opt_one_shot_2 --sweep_cfg sweep --ngpus 1 --ncpus 12 --exps_num 1 --group None --sweep_id None
