@@ -6,7 +6,7 @@ from torchvision import models
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
 import sys
 sys.path.append('..')
-from dataset.segmentation import KFoldDataframeMulticlassProcessor_v2
+from dataset.segmentation import KFoldDataframeMulticlassProcessor
 import torch
 import pandas as pd
 from pathlib import Path
