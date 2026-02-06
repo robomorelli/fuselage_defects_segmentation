@@ -19,11 +19,11 @@ def main():
     """
     parser = argparse.ArgumentParser(description='Segmentation HPO Sweep')
     parser.add_argument('--entity', type=str, default='robmorelli', help='Wandb entity')
-    parser.add_argument('--project_name', type=str, default='fuselage_segmentation_hpo', help='Wandb project name')
-    parser.add_argument('--sweep_cfg', type=str, default='sweep_mask2former', help='Sweep config file (without .yaml)')
-    parser.add_argument('--architecture', type=str, default='pspnet',
-                        choices=['deeplabv3plus', 'pspnet'], #'mask2former'],
-                        help='Model architecture')
+    parser.add_argument('--project_name', type=str, default='fuselage_segmentation_hpo_pspnet', help='Wandb project name')
+    parser.add_argument('--sweep_cfg', type=str, default='sweep_pspnet', help='Sweep config file (without .yaml) choices=[sweep_deeplabv3plus, sweep_pspnet]')
+    #parser.add_argument('--architecture', type=str, default='pspnet',
+    #                    choices=['deeplabv3plus', 'pspnet'], #'mask2former'],
+    #                    help='Model architecture')
     parser.add_argument('--ngpus', type=int, default=1, help='Number of GPUs')
     parser.add_argument('--ncpus', type=int, default=12, help='Number of CPUs')
     parser.add_argument('--exps_num', type=int, default=1, help='Number of experiments')

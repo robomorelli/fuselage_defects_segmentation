@@ -117,7 +117,6 @@ def training_cycle_segmentation(cfg, model, train_loader, val_loader, optimizer,
             images = batch['images'].to(device)
             images = images.float()  # Ensure float32
 
-            print(images.max(), torch.unique(batch['targets'][0]['masks']))
 
             batch_size, _, h, w = images.shape
             semantic_masks = torch.zeros((batch_size, h, w), dtype=torch.long, device=device)

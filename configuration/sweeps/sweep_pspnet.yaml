@@ -22,7 +22,7 @@ parameters:
     values: [2, 4]
 
   crop_size:
-    values: [512, 768]
+    values: [512]
 
   classes_weights:
     values:
@@ -50,7 +50,7 @@ parameters:
     value: 1
 
   ncpus:
-    value: 6
+    value: 12
 
 program:
   train_segmentator.py

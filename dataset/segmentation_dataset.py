@@ -9,6 +9,202 @@ from pathlib import Path
 import pandas as pd
 
 
+class SegmentationDatasetFromFolder(Dataset):
+    """
+    Dataset che legge direttamente da una cartella senza CSV.
+    Utile per evaluation/inference su nuovi dati.
+
+    Struttura cartelle attesa:
+    data_path/
+    ├── images/
+    │   ├── img1.png
+    │   ├── img2.png
+    │   └── ...
+    └── masks/  (opzionale, solo se hai ground truth)
+        ├── img1.png
+        ├── img2.png
+        └── ...
+    """
+
+    def __init__(self, data_path, augmentation=False, normalize=True,
+                 crop_size=512, has_masks=True):
+        """
+        Args:
+            data_path: Path alla cartella principale contenente images/ (e masks/)
+            augmentation: Se applicare data augmentation
+            normalize: Se normalizzare con ImageNet stats
+            crop_size: Dimensione del crop (solo se augmentation=True)
+            has_masks: Se la cartella contiene anche le masks (per evaluation)
+        """
+        self.data_path = data_path
+        self.augmentation = augmentation
+        self.normalize = normalize
+        self.crop_size = crop_size
+        self.has_masks = has_masks
+
+        # Images and masks directories
+        self.images_dir = os.path.join(data_path, 'images')
+        self.masks_dir = os.path.join(data_path, 'masks') if has_masks else None
+
+        if not os.path.exists(self.images_dir):
+            raise FileNotFoundError(f"Images directory not found: {self.images_dir}")
+
+        # Get all image files
+        valid_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff'}
+        self.images_file_names = sorted([
+            f for f in os.listdir(self.images_dir)
+            if os.path.splitext(f)[1].lower() in valid_extensions
+        ])
+
+        if len(self.images_file_names) == 0:
+            raise ValueError(f"No images found in {self.images_dir}")
+
+        # If has_masks, verify that corresponding masks exist
+        if self.has_masks:
+            if not os.path.exists(self.masks_dir):
+                raise FileNotFoundError(f"Masks directory not found: {self.masks_dir}")
+
+            valid_images = []
+            for img_name in self.images_file_names:
+                mask_name = img_name  # assume same filename
+                mask_path = os.path.join(self.masks_dir, mask_name)
+                if os.path.exists(mask_path):
+                    valid_images.append(img_name)
+                else:
+                    print(f"Warning: No mask found for {img_name}")
+
+            self.images_file_names = valid_images
+
+        print(f"Loaded {len(self.images_file_names)} images from {self.images_dir}")
+        if self.has_masks:
+            print(f"Masks dir: {self.masks_dir}")
+        print(f"Crop size: {crop_size}x{crop_size}")
+
+        # Setup augmentation
+        self.transform = self._setup_transforms()
+
+    def _setup_transforms(self):
+        """Setup albumentations transforms"""
+        transforms_list = []
+
+        if self.augmentation:
+            transforms_list.extend([
+                A.RandomCrop(height=self.crop_size, width=self.crop_size),
+                A.HorizontalFlip(p=0.5),
+                A.VerticalFlip(p=0.5),
+                A.RandomRotate90(p=0.5),
+                A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=15, p=0.5),
+                A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.3),
+                A.GaussNoise(p=0.2),
+            ])
+        else:
+            # Per evaluation: center crop o resize
+            transforms_list.append(A.CenterCrop(height=self.crop_size, width=self.crop_size))
+
+        # Normalization
+        if self.normalize:
+            transforms_list.append(
+                A.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225]
+                )
+            )
+
+        transforms_list.append(ToTensorV2())
+
+        return A.Compose(transforms_list)
+
+    def __len__(self):
+        return len(self.images_file_names)
+
+    def __getitem__(self, idx):
+        # Load image
+        image_path = os.path.join(self.images_dir, self.images_file_names[idx])
+        image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError(f"Could not load image: {image_path}")
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Load mask if available
+        if self.has_masks:
+            mask_path = os.path.join(self.masks_dir, self.images_file_names[idx])
+            mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
+            if mask is None:
+                raise ValueError(f"Could not load mask: {mask_path}")
+        else:
+            # Dummy mask (all zeros)
+            mask = np.zeros(image.shape[:2], dtype=np.uint8)
+
+        # Apply transformations
+        if self.transform:
+            transformed = self.transform(image=image, mask=mask)
+            image = transformed['image']
+            mask = transformed['mask']
+        else:
+            image = torch.from_numpy(image).permute(2, 0, 1).float()
+            mask = torch.from_numpy(mask).long()
+
+        # Convert semantic mask to instance format
+        instances = self._mask_to_instances(mask if isinstance(mask, np.ndarray) else mask.numpy())
+
+        target = {
+            'masks': instances['masks'],
+            'labels': instances['labels']
+        }
+
+        return {
+            'image': image,
+            'target': target,
+            'image_id': idx,
+            'filename': self.images_file_names[idx]  # utile per salvataggio
+        }
+
+    def _mask_to_instances(self, mask):
+        """
+        Converts semantic mask (H, W) to instance masks.
+        Each connected component of each class becomes a separate instance.
+
+        Args:
+            mask: numpy array (H, W) with class IDs (0=background, 1=mark, 2=scratch, 3=drill)
+
+        Returns:
+            dict with 'masks' (N, H, W) tensor and 'labels' (N,) tensor
+        """
+        unique_classes = np.unique(mask)
+        unique_classes = unique_classes[unique_classes != 0]  # exclude background
+
+        instance_masks = []
+        labels = []
+
+        for class_id in unique_classes:
+            # Binary mask for this class
+            class_mask = (mask == class_id).astype(np.uint8)
+
+            # Find connected components
+            num_instances, labels_im = cv2.connectedComponents(class_mask)
+
+            for instance_id in range(1, num_instances):  # skip background (0)
+                instance_mask = (labels_im == instance_id).astype(np.float32)
+
+                # Filter out very small instances
+                if instance_mask.sum() < 10:
+                    continue
+
+                instance_masks.append(torch.from_numpy(instance_mask))
+                labels.append(int(class_id))  # use class_id directly (1,2,3)
+
+        # Handle case with no instances
+        if len(instance_masks) == 0:
+            h, w = mask.shape
+            instance_masks = [torch.zeros((h, w), dtype=torch.float32)]
+            labels = [0]  # dummy label
+
+        return {
+            'masks': torch.stack(instance_masks),
+            'labels': torch.tensor(labels, dtype=torch.long)
+        }
+
+
 class SegmentationDataset(Dataset):
     """
     Dataset adapter for Mask2Former.
