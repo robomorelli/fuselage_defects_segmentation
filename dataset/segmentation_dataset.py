@@ -385,6 +385,184 @@ class SegmentationDataset(Dataset):
         }
 
 
+class EvaluationSegmentationDataset(Dataset):
+    """
+    Dataset SOLO per evaluation con auto-detect CSV.
+    Supporta sia file CSV che directory (auto-trova cropped_filenames.csv o full_size_filenames.csv).
+
+    NON usare per training! Usa SegmentationDataset invece.
+    """
+
+    def __init__(self, data_path, csv_path=None, normalize=True,
+                 from_csv=False, from_folder=False, cropped=True, crop_size=512):
+        """
+        Args:
+            data_path: Root directory containing images/ and masks/ folders
+            csv_path: Path to CSV file OR directory containing CSV
+            normalize: ImageNet normalization (0 or 1)
+            from_csv: Load filenames from CSV
+            from_folder: Load all files from folder
+            cropped: If True, look for cropped_filenames.csv, else full_size_filenames.csv
+            crop_size: Crop size (kept for compatibility, not used)
+        """
+        self.data_path = Path(data_path)
+        self.images_dir = self.data_path / 'images'
+        self.masks_dir = self.data_path / 'masks'
+        self.csv_path = csv_path
+        self.normalize = normalize
+        self.from_csv = from_csv
+        self.from_folder = from_folder
+        self.cropped = cropped
+
+        # Auto-detect CSV file if directory is provided
+        if csv_path and Path(csv_path).is_dir():
+            csv_filename = 'cropped_filenames.csv' if cropped else 'full_size_filenames.csv'
+            self.csv_path = Path(csv_path) / csv_filename
+            print(f"Auto-detected CSV: {self.csv_path}")
+
+        # Get filenames
+        if from_csv and csv_path:
+            self._load_from_csv()
+        elif from_folder:
+            self._load_from_folder()
+        else:
+            # Default: try CSV from standard structure
+            if csv_path:
+                self._load_from_csv()
+            else:
+                self._load_from_folder()
+
+        # Setup transforms
+        if normalize:
+            self.mean = (0.485, 0.456, 0.406)
+            self.std = (0.229, 0.224, 0.225)
+        else:
+            self.mean = (0.0, 0.0, 0.0)
+            self.std = (1.0, 1.0, 1.0)
+
+        self.transform = A.Compose([
+            A.Normalize(mean=self.mean, std=self.std),
+            ToTensorV2(),
+        ])
+
+    def _load_from_csv(self):
+        """Load filenames from CSV"""
+        if not Path(self.csv_path).exists():
+            raise FileNotFoundError(f"CSV file not found: {self.csv_path}")
+
+        print(f"Loading filenames from CSV: {self.csv_path}")
+
+        df = pd.read_csv(self.csv_path)
+
+        # Try different column names
+        if 'filename' in df.columns:
+            self.images_file_names = df['filename'].tolist()
+        elif 'images' in df.columns:
+            self.images_file_names = df['images'].tolist()
+        elif 'image' in df.columns:
+            self.images_file_names = df['image'].tolist()
+        else:
+            # Assume first column contains filenames
+            self.images_file_names = df.iloc[:, 0].tolist()
+
+        # Generate mask filenames
+        self.masks_file_names = [
+            f.replace('.png', '_mask.png').replace('.jpg', '_mask.jpg')
+            for f in self.images_file_names
+        ]
+
+    def _load_from_folder(self):
+        """Load all files from folder"""
+        print(f"Loading filenames from folder: {self.images_dir}")
+
+        # Get all image files
+        valid_extensions = {'.png', '.jpg', '.jpeg'}
+        self.images_file_names = sorted([
+            f.name for f in self.images_dir.iterdir()
+            if f.suffix.lower() in valid_extensions
+        ])
+
+        # Generate mask filenames
+        self.masks_file_names = sorted([
+            f.name for f in self.masks_dir.iterdir()
+            if f.suffix.lower() in valid_extensions
+        ])
+
+    def __len__(self):
+        return len(self.images_file_names)
+
+    def __getitem__(self, idx):
+        """
+        Returns:
+            dict with 'images' and 'targets' keys
+            Compatible with MMSeg collate function
+        """
+        # Load image
+        img_path = self.images_dir / self.images_file_names[idx]
+        image = cv2.imread(str(img_path))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Load mask
+        mask_path = self.masks_dir / self.masks_file_names[idx]
+        mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+
+        # Apply transforms
+        transformed = self.transform(image=image, mask=mask)
+        image_tensor = transformed['image']
+
+        # Handle mask - check if already tensor or numpy
+        mask_data = transformed['mask']
+        if isinstance(mask_data, torch.Tensor):
+            mask_tensor = mask_data.long()
+        else:
+            mask_tensor = torch.from_numpy(mask_data).long()
+
+        # Convert to instance format
+        instances = self._mask_to_instances(mask_tensor.numpy())
+
+        target = {
+            'masks': instances['masks'],
+            'labels': instances['labels']
+        }
+
+        return {
+            'images': image_tensor,
+            'targets': target
+        }
+
+    def _mask_to_instances(self, mask):
+        """Convert semantic mask to instance format"""
+        unique_classes = np.unique(mask)
+        unique_classes = unique_classes[unique_classes != 0]
+
+        instance_masks = []
+        labels = []
+
+        for class_id in unique_classes:
+            class_mask = (mask == class_id).astype(np.uint8)
+            num_instances, labels_im = cv2.connectedComponents(class_mask)
+
+            for instance_id in range(1, num_instances):
+                instance_mask = (labels_im == instance_id).astype(np.float32)
+
+                if instance_mask.sum() < 10:
+                    continue
+
+                instance_masks.append(torch.from_numpy(instance_mask))
+                labels.append(int(class_id))
+
+        # Handle case with no instances
+        if len(instance_masks) == 0:
+            h, w = mask.shape
+            instance_masks = [torch.zeros((h, w), dtype=torch.float32)]
+            labels = [0]
+
+        return {
+            'masks': torch.stack(instance_masks),
+            'labels': torch.tensor(labels, dtype=torch.long)
+        }
+
+
 def segmentation_collate_fn(batch):
     """
     Custom collate function for Mask2Former.
@@ -405,4 +583,18 @@ def segmentation_collate_fn(batch):
         'images': images,
         'targets': targets,
         'image_ids': image_ids
+    }
+
+
+def evaluation_collate_fn(batch):
+    """
+    Collate function for evaluation dataloader.
+    Compatible with MMSeg training code.
+    """
+    images = torch.stack([item['images'] for item in batch])
+    targets = [item['targets'] for item in batch]
+
+    return {
+        'images': images,
+        'targets': targets
     }

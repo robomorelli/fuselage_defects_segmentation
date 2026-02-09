@@ -15,6 +15,7 @@ from utils.training_segmentation import (
     training_cycle_segmentation
 )
 from utils.opt import EarlyStopping
+from datetime import datetime
 
 
 def get_free_gpu():
@@ -90,6 +91,25 @@ def train():
         raise FileNotFoundError(f"Config not found: {config_path}")
 
     cfg = Box.from_yaml(filename=config_path)
+
+    sweep_id = run.sweep_id
+    api = wandb.Api()
+    entity = run.entity  # Automatically get the entity of the current run
+    project = run.project  # Automatically get the project of the current run
+    sweep = api.sweep(f"{entity}/{project}/{sweep_id}")
+    sweep_name = sweep.name  # Retrieve the sweeps name
+    # Generate a unique timestamp for this training run
+    now = datetime.now().strftime("%d_%m_%Y_%H_%M_%S")
+    cfg.model.backbone = wandb.config.get('backbone', 'resnet50')
+    cfg.wandb.project = wandb.config.get('project_name', f'f{architecture}_hpo')
+
+    fold = int(wandb.config.get('fold', '1'))  # Ensure fold is an integer
+
+    out_dir = os.path.join(cfg.wandb.project, sweep_name, cfg.model.name, cfg.model.backbone,
+                             f"fold_{fold}", cfg.model.exp_name + f'_w_{cfg.opt.weights[0]}_{cfg.opt.weights[1]}_{cfg.opt.weights[2]}' + "_" + now,
+                             run.name)
+
+    cfg.model.checkpoint = os.path.join(out_dir, cfg.model.name + '.pth')
 
     # Check wandb online/offline mode
     wandb_online = cfg.get('wandb', {}).get('online', 1)
@@ -191,7 +211,6 @@ def train():
     print("=" * 50)
 
     model_name = f"{cfg.model.architecture}_{cfg.model.backbone}_fold{cfg.dataset.fold}"
-    out_dir = f"./models/{cfg.model.architecture}"
 
     training_cycle_segmentation(
         cfg=cfg,

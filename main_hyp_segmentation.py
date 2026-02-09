@@ -43,6 +43,7 @@ def main():
     # Update sweeps config with runtime parameters
     sweep_config['parameters']['n_gpus'] = {'value': args.ngpus}
     sweep_config['parameters']['ncpus'] = {'value': args.ncpus}
+    sweep_config['parameters']['project_name'] = {'value': args.project_name}
 
     # If architecture is specified and not in sweeps config, add it
     if 'architecture' not in sweep_config['parameters']:

@@ -12,7 +12,7 @@ import pandas as pd
 from pathlib import Path
 from torch.utils.data import DataLoader
 from config import *
-from evaluation.utils import F1Score, compute_metrics_th, compute_metrics_multiclass, compute_iou_multiclass
+from evaluation.eval_utils import F1Score, compute_metrics_th, compute_metrics_multiclass, compute_iou_multiclass
 from tqdm import tqdm
 import cv2
 import yaml

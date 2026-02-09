@@ -301,6 +301,8 @@ def training_cycle_segmentation(cfg, model, train_loader, val_loader, optimizer,
 
             model_to_save = model.module if hasattr(model, 'module') else model
 
+            print(f'saving model into {checkpoint_path}')
+
             torch.save({
                 'cfg': cfg,
                 'epoch': epoch,
