@@ -6,7 +6,7 @@ from torchvision import models
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
 import sys
 sys.path.append('..')
-from dataset.segmentation import KFoldDataframeMulticlassProcessor_v2
+from dataset.segmentation import KFoldDataframeMulticlassProcessor
 import torch
 import pandas as pd
 from pathlib import Path
@@ -156,7 +156,7 @@ def main(data_path, model_path, ths_num=0, unique_th=0.4
     else:
         df_path = os.path.join(df_path, split)
 
-    dataset = KFoldDataframeMulticlassProcessor_v2(data_path, df_path=df_path, transform=transform,
+    dataset = KFoldDataframeMulticlassProcessor(data_path, df_path=df_path, transform=transform,
                                                 normalize_imagenet=normalize_imagenet, cropped=cropped,
                                                 from_full_to_crop=from_full_to_crop,  processor=processor)
 

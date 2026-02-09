@@ -6,7 +6,7 @@ from torchvision import models
 from torchvision.models.segmentation.deeplabv3 import DeepLabHead
 import sys
 sys.path.append('..')
-from dataset.segmentation import KFoldDataframeMulticlassProcessor_v2
+from dataset.segmentation import KFoldDataframeMulticlassProcessor
 import torch
 import pandas as pd
 from pathlib import Path
@@ -93,7 +93,7 @@ def main(data_path, model_path, exp_name=None):
         processor = SegformerImageProcessor.from_pretrained(cfg.model.encoder_name)
 
     transform = None
-    dataset = KFoldDataframeMulticlassProcessor_v2(data_path, df_path=None, from_folder=True, transform=transform,
+    dataset = KFoldDataframeMulticlassProcessor(data_path, df_path=None, from_folder=True, transform=transform,
                                                 normalize_imagenet=normalize_imagenet,
                                                 from_full_to_crop=True,  processor=processor)
 
