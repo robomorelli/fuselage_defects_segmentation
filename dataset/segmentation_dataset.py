@@ -7,6 +7,17 @@ from albumentations.pytorch import ToTensorV2
 import os
 from pathlib import Path
 import pandas as pd
+from IPython.display import Image, display
+
+# Fix Qt/xcb errors - MUST BE BEFORE ANY OTHER IMPORTS
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+os.environ['MPLBACKEND'] = 'Agg'
+os.environ['QT_LOGGING_RULES'] = '*.debug=false;qt.qpa.*=false'
+
+# Now safe to import matplotlib
+import matplotlib
+matplotlib.use('Agg')
+
 
 
 class SegmentationDatasetFromFolder(Dataset):

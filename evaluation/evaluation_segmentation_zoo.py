@@ -209,7 +209,7 @@ def create_dataloader(data_path, csv_path, cfg, batch_size=1, cropped=True):
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate MMSeg segmentation models")
-    parser.add_argument("--model_path", default="./fuselage_segmentation_hpo_pspnet/57a4d1ug/pspnet/resnet50/fold_1/pspnet_hpo_w_1_1_1.05_09_02_2026_14_25_01/robust-sweep-1/pspnet_resnet50_fold1.pth",
+    parser.add_argument("--model_path", default="./fuselage_segmentation_hpo_pspnet/95klivew/pspnet/resnet50/fold_1/pspnet_hpo_w_1_1_1.05_09_02_2026_17_21_47/distinctive-sweep-1/pspnet_resnet50_fold1.pth",
                         help="Path to model checkpoint (.pth file)")
     parser.add_argument("--data_path", default="data/cropped_data",
                         help="Path to data directory (containing images/ and masks/)")

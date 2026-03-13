@@ -78,7 +78,7 @@ echo "=========================================="
 source $HOME/.bashrc
 cd /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/batch_scripts
 
-python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/batch_scripts/001_run_batch_hyp_segmentation.py \
+python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/batch_scripts/001_run_batch_hyp_mmsegmentation.py \
   --entity "$entity" \
   --project_name "$project_name" \
   --architecture "$architecture" \
@@ -92,13 +92,13 @@ python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_s
 # Usage examples:
 #
 # Screening (test all architectures):
-# ./000_wrapper_run_batch_hyp_segmentation.sh --architecture deeplabv3plus --sweep_cfg screening --exps_num 2
+# ./000_wrapper_run_batch_hyp_mmsegmentation.sh --architecture deeplabv3plus --sweep_cfg screening --exps_num 2
 #
 # Resolution comparison:
-# ./000_wrapper_run_batch_hyp_segmentation.sh --architecture deeplabv3plus --sweep_cfg resolution_comparison --exps_num 8
+# ./000_wrapper_run_batch_hyp_mmsegmentation.sh --architecture deeplabv3plus --sweep_cfg resolution_comparison --exps_num 8
 #
 # Deep HPO on DeepLabV3+:
-# ./000_wrapper_run_batch_hyp_segmentation.sh --architecture deeplabv3plus --sweep_cfg deeplabv3plus_hpo --exps_num 20
+# ./000_wrapper_run_batch_hyp_mmsegmentation.sh --architecture deeplabv3plus --sweep_cfg deeplabv3plus_hpo --exps_num 20
 #
 # Deep HPO on PSPNet:
-# ./000_wrapper_run_batch_hyp_segmentation.sh --architecture pspnet --sweep_cfg pspnet_hpo --exps_num 20
+# ./000_wrapper_run_batch_hyp_mmsegmentation.sh --architecture pspnet --sweep_cfg pspnet_hpo --exps_num 20

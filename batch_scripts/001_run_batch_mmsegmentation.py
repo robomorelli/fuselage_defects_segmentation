@@ -50,7 +50,7 @@ source $HOME/.bashrc
 cd /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation
 
 conda activate flai
-python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/main_hyp_segmentation.py \\
+python /davinci-1/home/morellir/artificial_intelligence/repos/fuselage_defects_segmentation/main_hyp_mmsegmentation.py \\
 --entity {entity} \\
 --project_name {project_name} \\
 --architecture {architecture} \\

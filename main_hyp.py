@@ -13,8 +13,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 
 def main(args):
     # Paths to YAML files
-    cfg_yaml = os.path.join(config_folder, f'{args.conf_yaml}.yaml')
-    sweep_yaml = os.path.join(config_folder, f'{args.sweep_cfg}.yaml')
+    cfg_yaml = f'configuration/architectures/{args.conf_yaml}.yaml'
+    sweep_yaml = f'configuration/sweeps/{args.sweep_cfg}.yaml'
 
     # Read sweeps configuration
     sweep_config = read_yaml(sweep_yaml)
